@@ -1,4 +1,4 @@
-package gokad
+package gopeers
 
 import "testing"
 

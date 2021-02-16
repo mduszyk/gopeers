@@ -1,4 +1,4 @@
-package gokad
+package gopeers
 
 func factorial(n int) int {
 	if n <= 0 {
