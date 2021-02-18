@@ -10,12 +10,22 @@ type Decoder interface {
 	Decode(p []byte, v interface{}) error
 }
 
-type JsonEncoder struct { }
+type jsonEncoder struct { }
 
-func (encoder *JsonEncoder) Encode(v interface{}) ([]byte, error) {
+func NewJsonEncoder() Encoder {
+	return &jsonEncoder{}
+}
+
+func (encoder *jsonEncoder) Encode(v interface{}) ([]byte, error) {
 	return json.Marshal(v)
 }
 
-func (encoder *JsonEncoder) Decode(p []byte, v interface{}) error {
+type jsonDecoder struct { }
+
+func NewJsonDecoder() Decoder {
+	return &jsonDecoder{}
+}
+
+func (encoder *jsonDecoder) Decode(p []byte, v interface{}) error {
 	return json.Unmarshal(p, v)
 }

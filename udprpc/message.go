@@ -1,10 +1,10 @@
 package udprpc
 
-const TypeService1Request = uint32(1)
-const TypeService1Response = uint32(2)
+const TypeEchoRequest = uint32(1)
+const TypeEchoResponse = uint32(2)
 
 type RpcMessage struct {
-	Id [8]byte
 	Type uint32
+	Id [8]byte
 	Payload []byte
 }

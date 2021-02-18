@@ -11,17 +11,18 @@ func TestJsonEncoder(t *testing.T) {
 	payload := []byte{2, 4, 8, 16}
 	message := RpcMessage {
 		Id: id,
-		Type: TypeService1Request,
+		Type: TypeEchoRequest,
 		Payload: payload,
 	}
-	encoder := &JsonEncoder{}
+	encoder := NewJsonEncoder()
 	buf, err := encoder.Encode(message)
 	if err != nil {
 		t.Errorf("failed encoding: %v\n", err)
 	}
 	log.Printf("encoded message: %s\n", buf)
 	var decodedMessage RpcMessage
-	err = encoder.Decode(buf, &decodedMessage)
+	decoder := NewJsonDecoder()
+	err = decoder.Decode(buf, &decodedMessage)
 	if err != nil {
 		t.Errorf("failed decoding: %v\n", err)
 	}
