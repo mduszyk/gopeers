@@ -48,14 +48,14 @@ func NewRpcNode(address string, services []RpcFunc) (*rpcNode, error) {
 
 func (n *rpcNode) Run() {
 	var message RpcMessage
-	b := make([]byte, 0)
+	buf := make([]byte, 0)
 	for {
-		_, addr, err := n.conn.ReadFromUDP(b)
+		_, addr, err := n.conn.ReadFromUDP(buf)
 		if err != nil {
 			log.Printf("failed reading from udp, error: %s\n", err)
 			continue
 		}
-		err = n.decoder.Decode(b, &message)
+		err = n.decoder.Decode(buf, &message)
 		if err != nil {
 			log.Printf("failed decoding message, error: %s\n", err)
 			continue
