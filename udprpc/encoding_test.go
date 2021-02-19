@@ -10,8 +10,9 @@ func TestJsonEncoder(t *testing.T) {
 	id := [8]byte{1, 2, 3, 4, 5, 6, 7, 8}
 	payload := []byte{2, 4, 8, 16}
 	message := RpcMessage {
+		Type: RpcTypeRequest,
+		Service: RpcServiceEcho,
 		Id: id,
-		Type: TypeEchoRequest,
 		Payload: payload,
 	}
 	encoder := NewJsonEncoder()
@@ -28,6 +29,7 @@ func TestJsonEncoder(t *testing.T) {
 	}
 	if decodedMessage.Id != message.Id ||
 		decodedMessage.Type != message.Type ||
+		decodedMessage.Service != message.Service ||
 		!bytes.Equal(decodedMessage.Payload, message.Payload) {
 		t.Errorf("message decoded incorrectly\n")
 	}
