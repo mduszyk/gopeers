@@ -2,6 +2,7 @@ package udprpc
 
 import (
 	"bytes"
+	"errors"
 	"log"
 	"testing"
 )
@@ -10,22 +11,27 @@ var echo1Payloads []RpcPayload
 var echo2Payloads []RpcPayload
 var echo3Payloads []RpcPayload
 
-func echo1(payload RpcPayload) RpcPayload {
+func echo1(payload RpcPayload) (RpcPayload, error) {
 	log.Printf("echo1 received payload: %s\n", payload)
 	echo1Payloads = append(echo1Payloads, payload)
-	return payload
+	return payload, nil
 }
 
-func echo2(payload RpcPayload) RpcPayload {
+func echo2(payload RpcPayload) (RpcPayload, error) {
 	log.Printf("echo2 received payload: %s\n", payload)
 	echo2Payloads = append(echo2Payloads, payload)
-	return payload
+	return payload, nil
 }
 
-func echo3(payload RpcPayload) RpcPayload {
+func echo3(payload RpcPayload) (RpcPayload, error) {
 	log.Printf("echo3 received payload: %s\n", payload)
 	echo3Payloads = append(echo3Payloads, payload)
-	return payload
+	return payload, nil
+}
+
+func failure(payload RpcPayload) (RpcPayload, error) {
+	log.Printf("failure received payload: %s\n", payload)
+	return nil, errors.New("rpc service failure")
 }
 
 func TestRpcNode(t *testing.T) {
@@ -34,7 +40,7 @@ func TestRpcNode(t *testing.T) {
 		t.Errorf("failed creating rpc node: %v\n", err)
 	}
 	go node1.Run()
-	node2, err := NewRpcNode("localhost:", []RpcFunc{echo3})
+	node2, err := NewRpcNode("localhost:", []RpcFunc{echo3, failure})
 	if err != nil {
 		t.Errorf("failed creating rpc node: %v\n", err)
 	}
@@ -80,5 +86,9 @@ func TestRpcNode(t *testing.T) {
 	}
 	if !bytes.Equal(echo3Payloads[0], []byte("test3")) {
 		t.Errorf("rpc service was not called\n")
+	}
+	response, err = node1.Call(node2.Addr, RpcService(1), []byte("test4"))
+	if err == nil || err.Error() != "rpc service failure" {
+		t.Errorf("expected error from rpc service\n")
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type RpcFunc func(payload RpcPayload) RpcPayload
+type RpcFunc func(payload RpcPayload) (RpcPayload, error)
 
 type pendingRequest struct {
 	request *RpcMessage
@@ -82,15 +82,19 @@ func (node *rpcNode) Run() {
 
 func (node *rpcNode) handleRequest(request RpcMessage, addr *net.UDPAddr) {
 	fn := node.services[request.Service]
-	result := fn(request.Payload)
+	result, err := fn(request.Payload)
 	response := &RpcMessage{
 		Type: RpcTypeResponse,
 		Id: request.Id,
 		Payload: result,
 	}
-	err := node.send(response, addr)
 	if err != nil {
-		log.Printf("failed handling request: %v, error: %s", request, err)
+		response.Payload = nil
+		response.Error = []byte(err.Error())
+	}
+	err = node.send(response, addr)
+	if err != nil {
+		log.Printf("failed sending response, request: %v, error: %s", request, err)
 	}
 }
 
@@ -141,7 +145,11 @@ func (node *rpcNode) Call(addr *net.UDPAddr, service RpcService, payload RpcPayl
 	select {
 	case response := <-pending.response:
 		node.removePending(request.Id)
-		return response.Payload, nil
+		if response.Error != nil {
+			return nil, errors.New(string(response.Error))
+		} else {
+			return response.Payload, nil
+		}
 	case <-time.After(node.callTimeout):
 		node.removePending(request.Id)
 		return nil, errors.New("call timeout")
