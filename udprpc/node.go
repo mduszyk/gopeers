@@ -17,20 +17,27 @@ type pendingRequest struct {
 }
 
 type rpcNode struct {
-	Addr *net.UDPAddr
-	services []RpcFunc
-	conn *net.UDPConn
+	Addr            *net.UDPAddr
+	services        []RpcFunc
+	conn            *net.UDPConn
 	pendingRequests map[RpcId]*pendingRequest
-	pendingMutex *sync.Mutex
-	encoder Encoder
-	decoder Decoder
-	callTimeout time.Duration
+	pendingMutex    *sync.Mutex
+	encoder         Encoder
+	decoder         Decoder
+	callTimeout     time.Duration
+	readBufferSize  uint32
 }
 
 func NewRpcNode(address string, services []RpcFunc) (*rpcNode, error) {
-	n := &rpcNode{}
-	n.callTimeout = 500 * time.Millisecond
-	n.services = services
+	node := &rpcNode{
+		callTimeout:     500 * time.Millisecond,
+		readBufferSize:  1024,
+		pendingRequests: make(map[RpcId]*pendingRequest),
+		pendingMutex:    &sync.Mutex{},
+		encoder:         NewJsonEncoder(),
+		decoder:         NewJsonDecoder(),
+		services:        services,
+	}
 	addr, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
 		return nil, err
@@ -39,23 +46,19 @@ func NewRpcNode(address string, services []RpcFunc) (*rpcNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	n.conn = conn
+	node.conn = conn
 	addr, err = net.ResolveUDPAddr("udp", conn.LocalAddr().String())
 	if err != nil {
 		return nil, err
 	}
-	n.Addr = addr
-	log.Printf("rpcNode addr: %v\n", n.Addr)
-	n.pendingRequests = make(map[RpcId]*pendingRequest)
-	n.pendingMutex = &sync.Mutex{}
-	n.encoder = NewJsonEncoder()
-	n.decoder = NewJsonDecoder()
-	return n, nil
+	node.Addr = addr
+	log.Printf("rpcNode addr: %v\n", node.Addr)
+	return node, nil
 }
 
 func (node *rpcNode) Run() {
 	var message RpcMessage
-	buf := make([]byte, 512)
+	buf := make([]byte, node.readBufferSize)
 	for {
 		n, addr, err := node.conn.ReadFromUDP(buf)
 		if err != nil {
