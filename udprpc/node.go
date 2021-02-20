@@ -146,6 +146,6 @@ func (node *rpcNode) Call(addr *net.UDPAddr, service RpcService, payload RpcPayl
 		return response.Payload, nil
 	case <-time.After(node.callTimeout):
 		node.removePending(request.Id)
-		return nil, errors.New("timeout")
+		return nil, errors.New("call timeout")
 	}
 }
