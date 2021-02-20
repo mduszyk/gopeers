@@ -13,9 +13,7 @@ func echo(payload RpcPayload) RpcPayload {
 
 // {"Type":1,"Service":0,"Id":5577006791947779410,"Payload":"dGVzdA=="}
 func TestRpcNode(t *testing.T) {
-	services1 := []RpcFunc{echo}
-	echoService := RpcService(0)
-	node1, err := NewRpcNode("localhost:7777", services1)
+	node1, err := NewRpcNode("localhost:7777", []RpcFunc{echo})
 	if err != nil {
 		t.Errorf("failed creating rpc node: %v\n", err)
 	}
@@ -27,7 +25,7 @@ func TestRpcNode(t *testing.T) {
 	}
 	go node2.Run()
 
-	response, err := node2.Call(node1.Addr, echoService, []byte("test"))
+	response, err := node2.Call(node1.Addr, RpcService(0), []byte("test"))
 	if err != nil {
 		t.Errorf("failed calling rpc service: %v\n", err)
 	}

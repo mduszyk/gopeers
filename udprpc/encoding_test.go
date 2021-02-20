@@ -7,13 +7,11 @@ import (
 )
 
 func TestJsonEncoder(t *testing.T) {
-	id := RpcId(1)
-	payload := []byte{2, 4, 8, 16}
 	message := RpcMessage {
 		Type: RpcTypeRequest,
-		Service: RpcServiceEcho,
-		Id: id,
-		Payload: payload,
+		Service: RpcService(1),
+		Id: RpcId(1),
+		Payload: []byte{2, 4, 8, 16},
 	}
 	encoder := NewJsonEncoder()
 	buf, err := encoder.Encode(message)

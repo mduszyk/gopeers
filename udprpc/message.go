@@ -14,6 +14,3 @@ type RpcMessage struct {
 
 const RpcTypeRequest = RpcType(1)
 const RpcTypeResponse = RpcType(2)
-
-const RpcServiceEcho = RpcService(1)
-
