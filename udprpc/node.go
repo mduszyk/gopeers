@@ -28,15 +28,6 @@ type rpcNode struct {
 }
 
 func NewRpcNode(address string, services []RpcFunc) (*rpcNode, error) {
-	node := &rpcNode{
-		callTimeout:     500 * time.Millisecond,
-		readBufferSize:  1024,
-		pendingRequests: make(map[RpcId]*pendingRequest),
-		pendingMutex:    &sync.Mutex{},
-		encoder:         NewJsonEncoder(),
-		decoder:         NewJsonDecoder(),
-		services:        services,
-	}
 	addr, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
 		return nil, err
@@ -50,8 +41,17 @@ func NewRpcNode(address string, services []RpcFunc) (*rpcNode, error) {
 		return nil, err
 	}
 	log.Printf("rpcNode addr: %v\n", addr)
-	node.Addr = addr
-	node.conn = conn
+	node := &rpcNode{
+		callTimeout:     500 * time.Millisecond,
+		readBufferSize:  1024,
+		pendingRequests: make(map[RpcId]*pendingRequest),
+		pendingMutex:    &sync.Mutex{},
+		encoder:         NewJsonEncoder(),
+		decoder:         NewJsonDecoder(),
+		services:        services,
+		Addr:            addr,
+		conn:            conn,
+	}
 	return node, nil
 }
 
