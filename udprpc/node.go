@@ -115,7 +115,7 @@ func (node *rpcNode) send(message *RpcMessage, addr *net.UDPAddr) error {
 	}
 	n, err := node.conn.WriteToUDP(buf, addr)
 	if err == nil && len(buf) != n {
-		return errors.New("failed writing whole message")
+		return errors.New("incomplete udp write")
 	}
 	return err
 }
