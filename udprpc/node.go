@@ -50,7 +50,7 @@ func NewRpcNode(address string, services []RpcFunc) (*rpcNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("rpcNode addr: %v\n", node.Addr)
+	log.Printf("rpcNode addr: %v\n", addr)
 	node.Addr = addr
 	node.conn = conn
 	return node, nil

@@ -13,7 +13,7 @@ func echo(payload RpcPayload) RpcPayload {
 
 // {"Type":1,"Service":0,"Id":5577006791947779410,"Payload":"dGVzdA=="}
 func TestRpcNode(t *testing.T) {
-	node1, err := NewRpcNode("localhost:7777", []RpcFunc{echo})
+	node1, err := NewRpcNode("localhost:", []RpcFunc{echo})
 	if err != nil {
 		t.Errorf("failed creating rpc node: %v\n", err)
 	}
