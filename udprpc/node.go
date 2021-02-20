@@ -61,7 +61,7 @@ func (node *rpcNode) Run() {
 	for {
 		n, addr, err := node.conn.ReadFromUDP(buf)
 		if err != nil {
-			log.Printf("failed reading from udp, error: %s\n", err)
+			log.Printf("failed reading from udp conn, error: %s\n", err)
 			continue
 		}
 		err = node.decoder.Decode(buf[:n], &message)
@@ -69,12 +69,12 @@ func (node *rpcNode) Run() {
 			log.Printf("failed decoding message, error: %s\n", err)
 			continue
 		}
-		log.Printf("received message: %v, from: %v\n", message, addr)
-		if message.Type == RpcTypeRequest {
+		switch message.Type {
+		case RpcTypeRequest:
 			go node.handleRequest(message, addr)
-		} else if message.Type == RpcTypeResponse {
+		case RpcTypeResponse:
 			go node.handleResponse(message)
-		} else {
+		default:
 			log.Printf("received unsupported message type: %v\n", message)
 		}
 	}
