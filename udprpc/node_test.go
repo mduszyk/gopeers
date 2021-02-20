@@ -10,6 +10,7 @@ import (
 var echo1Payloads []RpcPayload
 var echo2Payloads []RpcPayload
 var echo3Payloads []RpcPayload
+var failurePayloads []RpcPayload
 
 func echo1(payload RpcPayload) (RpcPayload, error) {
 	log.Printf("echo1 received payload: %s\n", payload)
@@ -31,6 +32,7 @@ func echo3(payload RpcPayload) (RpcPayload, error) {
 
 func failure(payload RpcPayload) (RpcPayload, error) {
 	log.Printf("failure received payload: %s\n", payload)
+	failurePayloads = append(failurePayloads, payload)
 	return nil, errors.New("rpc service failure")
 }
 
@@ -87,8 +89,15 @@ func TestRpcNode(t *testing.T) {
 	if !bytes.Equal(echo3Payloads[0], []byte("test3")) {
 		t.Errorf("rpc service was not called\n")
 	}
+
 	response, err = node1.Call(node2.Addr, RpcService(1), []byte("test4"))
 	if err == nil || err.Error() != "rpc service failure" {
 		t.Errorf("expected error from rpc service\n")
+	}
+	if len(failurePayloads) != 1 {
+		t.Errorf("rpc service was not called the correct number of times\n")
+	}
+	if !bytes.Equal(failurePayloads[0], []byte("test4")) {
+		t.Errorf("rpc service was not called\n")
 	}
 }
