@@ -90,7 +90,7 @@ func (node *rpcNode) handleRequest(request RpcMessage, addr *net.UDPAddr) {
 	}
 	if err != nil {
 		response.Payload = nil
-		response.Error = []byte(err.Error())
+		response.Error = RpcError(err.Error())
 	}
 	err = node.send(response, addr)
 	if err != nil {
