@@ -2,7 +2,7 @@ package udprpc
 
 type RpcType uint32
 type RpcService uint32
-type RpcId [8]byte
+type RpcId uint64
 type RpcPayload []byte
 
 type RpcMessage struct {

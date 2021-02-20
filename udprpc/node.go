@@ -3,6 +3,7 @@ package udprpc
 import (
 	"errors"
 	"log"
+	"math/rand"
 	"net"
 	"sync"
 	"time"
@@ -16,29 +17,35 @@ type pendingRequest struct {
 }
 
 type rpcNode struct {
+	Addr *net.UDPAddr
 	services []RpcFunc
-	addr *net.UDPAddr
 	conn *net.UDPConn
 	pendingRequests map[RpcId]*pendingRequest
 	pendingMutex *sync.Mutex
 	encoder Encoder
 	decoder Decoder
+	callTimeout time.Duration
 }
 
 func NewRpcNode(address string, services []RpcFunc) (*rpcNode, error) {
 	n := &rpcNode{}
+	n.callTimeout = 500 * time.Millisecond
 	n.services = services
 	addr, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
 		return nil, err
 	}
-	n.addr = addr
-	log.Printf("rpcNode addr: %v\n", n.addr)
-	conn, err := net.ListenUDP("udp", n.addr)
+	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
 		return nil, err
 	}
 	n.conn = conn
+	addr, err = net.ResolveUDPAddr("udp", conn.LocalAddr().String())
+	if err != nil {
+		return nil, err
+	}
+	n.Addr = addr
+	log.Printf("rpcNode addr: %v\n", n.Addr)
 	n.pendingRequests = make(map[RpcId]*pendingRequest)
 	n.pendingMutex = &sync.Mutex{}
 	n.encoder = NewJsonEncoder()
@@ -46,78 +53,78 @@ func NewRpcNode(address string, services []RpcFunc) (*rpcNode, error) {
 	return n, nil
 }
 
-func (n *rpcNode) Run() {
+func (node *rpcNode) Run() {
 	var message RpcMessage
-	buf := make([]byte, 0)
+	buf := make([]byte, 512)
 	for {
-		_, addr, err := n.conn.ReadFromUDP(buf)
+		n, addr, err := node.conn.ReadFromUDP(buf)
 		if err != nil {
 			log.Printf("failed reading from udp, error: %s\n", err)
 			continue
 		}
-		err = n.decoder.Decode(buf, &message)
+		err = node.decoder.Decode(buf[:n], &message)
 		if err != nil {
 			log.Printf("failed decoding message, error: %s\n", err)
 			continue
 		}
 		log.Printf("received message: %v, from: %v\n", message, addr)
 		if message.Type == RpcTypeRequest {
-			go n.handleRequest(message, addr)
+			go node.handleRequest(message, addr)
 		} else if message.Type == RpcTypeResponse {
-			go n.handleResponse(message)
+			go node.handleResponse(message)
 		} else {
 			log.Printf("received unsupported message type: %v\n", message)
 		}
 	}
 }
 
-func (n *rpcNode) handleRequest(request RpcMessage, addr *net.UDPAddr) {
-	fn := n.services[request.Service]
+func (node *rpcNode) handleRequest(request RpcMessage, addr *net.UDPAddr) {
+	fn := node.services[request.Service]
 	result := fn(request.Payload)
 	response := &RpcMessage{
 		Type: RpcTypeResponse,
 		Id: request.Id,
 		Payload: result,
 	}
-	err := n.send(response, addr)
+	err := node.send(response, addr)
 	if err != nil {
 		log.Printf("failed handling request: %v, error: %s", request, err)
 	}
 }
 
-func (n *rpcNode) handleResponse(response RpcMessage) {
-	n.pendingMutex.Lock()
-	if pending, ok := n.pendingRequests[response.Id]; ok {
+func (node *rpcNode) handleResponse(response RpcMessage) {
+	node.pendingMutex.Lock()
+	if pending, ok := node.pendingRequests[response.Id]; ok {
 		pending.response <- response
 	} else {
 		log.Printf("received unexpected response: %v\n", response)
 	}
-	n.pendingMutex.Unlock()
+	node.pendingMutex.Unlock()
 }
 
-func (n *rpcNode) send(message *RpcMessage, addr *net.UDPAddr) error {
-	buf, err := n.encoder.Encode(message)
+func (node *rpcNode) send(message *RpcMessage, addr *net.UDPAddr) error {
+	buf, err := node.encoder.Encode(message)
 	if err != nil {
 		return err
 	}
-	_, err = n.conn.WriteToUDP(buf, addr)
+	_, err = node.conn.WriteToUDP(buf, addr)
 	return err
 }
 
-func (n *rpcNode) addPending(id RpcId, pending *pendingRequest) {
-	n.pendingMutex.Lock()
-	n.pendingRequests[id] = pending
-	n.pendingMutex.Unlock()
+func (node *rpcNode) addPending(id RpcId, pending *pendingRequest) {
+	node.pendingMutex.Lock()
+	node.pendingRequests[id] = pending
+	node.pendingMutex.Unlock()
 }
 
-func (n *rpcNode) removePending(id RpcId) {
-	n.pendingMutex.Lock()
-	delete(n.pendingRequests, id)
-	n.pendingMutex.Unlock()
+func (node *rpcNode) removePending(id RpcId) {
+	node.pendingMutex.Lock()
+	delete(node.pendingRequests, id)
+	node.pendingMutex.Unlock()
 }
 
-func (n *rpcNode) Call(service RpcService, payload RpcPayload, addr *net.UDPAddr, timeout time.Duration) (*RpcMessage, error) {
-	var id [8]byte // TODO
+func (node *rpcNode) Call(addr *net.UDPAddr, service RpcService, payload RpcPayload) (RpcPayload, error) {
+	id := RpcId(rand.Uint64()) // TODO
 	request := &RpcMessage{
 		Type: RpcTypeRequest,
 		Service: service,
@@ -125,17 +132,17 @@ func (n *rpcNode) Call(service RpcService, payload RpcPayload, addr *net.UDPAddr
 		Payload: payload,
 	}
 	pending := &pendingRequest{request, make(chan RpcMessage, 1)}
-	n.addPending(request.Id, pending)
-	err := n.send(request, addr)
+	node.addPending(request.Id, pending)
+	err := node.send(request, addr)
 	if err != nil {
 		return nil, err
 	}
 	select {
 	case response := <-pending.response:
-		n.removePending(request.Id)
-		return &response, nil
-	case <-time.After(timeout):
-		n.removePending(request.Id)
+		node.removePending(request.Id)
+		return response.Payload, nil
+	case <-time.After(node.callTimeout):
+		node.removePending(request.Id)
 		return nil, errors.New("timeout")
 	}
 }
