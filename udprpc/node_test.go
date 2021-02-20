@@ -18,8 +18,7 @@ func TestRpcNode(t *testing.T) {
 		t.Errorf("failed creating rpc node: %v\n", err)
 	}
 	go node1.Run()
-	var services2 []RpcFunc
-	node2, err := NewRpcNode("localhost:", services2)
+	node2, err := NewRpcNode("localhost:", nil)
 	if err != nil {
 		t.Errorf("failed creating rpc node: %v\n", err)
 	}
