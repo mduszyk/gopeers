@@ -3,7 +3,6 @@ package udprpc
 import (
 	"errors"
 	"log"
-	"math/rand"
 	"net"
 	"sync"
 	"time"
@@ -127,11 +126,10 @@ func (node *rpcNode) removePending(id RpcId) {
 }
 
 func (node *rpcNode) Call(addr *net.UDPAddr, service RpcService, payload RpcPayload) (RpcPayload, error) {
-	id := RpcId(rand.Uint64()) // TODO
 	request := &RpcMessage{
 		Type: RpcTypeRequest,
 		Service: service,
-		Id: id,
+		Id: newId(),
 		Payload: payload,
 	}
 	pending := &pendingRequest{request, make(chan RpcMessage, 1)}
