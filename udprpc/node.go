@@ -46,13 +46,13 @@ func NewRpcNode(address string, services []RpcFunc) (*rpcNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	node.conn = conn
 	addr, err = net.ResolveUDPAddr("udp", conn.LocalAddr().String())
 	if err != nil {
 		return nil, err
 	}
-	node.Addr = addr
 	log.Printf("rpcNode addr: %v\n", node.Addr)
+	node.Addr = addr
+	node.conn = conn
 	return node, nil
 }
 
