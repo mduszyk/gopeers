@@ -1,6 +1,9 @@
 package peers
 
-type Peer interface {
-	Ping() error
-	FindNode() error
+import "time"
+
+type Peer struct {
+	Id Id
+	Protocol Protocol
+	LastSeen time.Time
 }
