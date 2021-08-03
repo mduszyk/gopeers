@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestSha1IdNode(t *testing.T) {
+func TestSha1Id(t *testing.T) {
 	data := []byte("Some test data.")
 	hash := sha1.Sum(data)
 	log.Printf("sha1: %x", hash)
@@ -20,7 +20,7 @@ func TestSha1IdNode(t *testing.T) {
 	}
 }
 
-func TestRandomIdNode(t *testing.T) {
+func TestRandomId(t *testing.T) {
 	id1, err := RandomId()
 	if err != nil {
 		t.Errorf("failed generating random id, err: %v\n", err)
