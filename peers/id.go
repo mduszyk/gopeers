@@ -12,8 +12,7 @@ type Id = *big.Int
 var maxId = new(big.Int).Lsh(big.NewInt(1), 159)
 
 func RandomId() (Id, error) {
-	id, err := rand.Int(rand.Reader, maxId)
-	return id, err
+	return rand.Int(rand.Reader, maxId)
 }
 
 func Sha1Id(data []byte) Id {
