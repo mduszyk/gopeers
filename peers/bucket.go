@@ -12,6 +12,7 @@ func NewBucket(k int, lo Id, hi Id) *bucket {
 	return &bucket{k, lo, hi, peers}
 }
 
+// lo <= id < hi
 func (b *bucket) inRange(id Id) bool {
 	r := b.lo.Cmp(id)
 	return (r == 0 || r == -1) && b.hi.Cmp(id) == 1
