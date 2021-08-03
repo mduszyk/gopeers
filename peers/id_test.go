@@ -35,3 +35,33 @@ func TestRandomId(t *testing.T) {
 		t.Errorf("generated two equal random ids\n")
 	}
 }
+
+func contains(s []uint, e uint) bool {
+    for _, a := range s {
+        if a == e {
+            return true
+        }
+    }
+    return false
+}
+
+func TestToBits(t *testing.T) {
+	id := big.NewInt(0)
+	powers := []uint{2, 3, 7, 16, 65, 128, 160}
+	for _, p := range powers {
+		id.Add(id, new(big.Int).Lsh(big.NewInt(1), p))
+	}
+	bits := ToBits(id)
+	for i, bit := range bits {
+		bitIndex := len(bits) - 1 - i
+		if contains(powers, uint(bitIndex)) {
+			if !bit {
+				t.Errorf("bit %d should be set\n", bitIndex)
+			}
+		} else {
+			if bit {
+				t.Errorf("bit %d should not be set\n", bitIndex)
+			}
+		}
+	}
+}
