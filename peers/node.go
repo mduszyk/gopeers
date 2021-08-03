@@ -2,7 +2,7 @@ package peers
 
 type p2pNode struct {
 	id Id
-	buckets []kBucket
+	buckets bucketList
 }
 
 func NewP2pNode() (*p2pNode, error) {
