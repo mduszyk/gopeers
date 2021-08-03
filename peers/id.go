@@ -9,7 +9,7 @@ import (
 
 type Id = *big.Int
 
-var maxId = new(big.Int).Lsh(big.NewInt(1), 160)
+var maxId = new(big.Int).Lsh(big.NewInt(1), 159)
 
 func RandomId() (Id, error) {
 	id, err := rand.Int(rand.Reader, maxId)
@@ -34,7 +34,23 @@ func ToBits(id Id) []bool {
 	return bools
 }
 
-func Prefix(bits []bool, id Id) []bool {
-	// TODO
-	return nil
+func Prefix(prefix []bool, id Id) []bool {
+	if len(prefix) == 0 {
+		return prefix
+	}
+	n := 0
+	words := id.Bits()
+	for i := len(words) - 1; i >= 0; i-- {
+		word := words[i]
+		for j := 1; j <= bits.UintSize; j++ {
+			mask := big.Word(1) << (bits.UintSize - j)
+			bit := word & mask > 0
+			if n < len(prefix) && bit == prefix[n] {
+				n++
+			} else {
+				return prefix[:n]
+			}
+		}
+	}
+	return prefix[:n]
 }
