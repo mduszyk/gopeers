@@ -13,9 +13,8 @@ func NewBucket(k int, lo Id, hi Id) *bucket {
 }
 
 func (b *bucket) inRange(id Id) bool {
-	r1 := b.lo.Cmp(id)
-	r2 := b.hi.Cmp(id)
-	return (r1 == 0 || r1 == -1) && r2 == 1
+	r := b.lo.Cmp(id)
+	return (r == 0 || r == -1) && b.hi.Cmp(id) == 1
 }
 
 func (b *bucket) isFull() bool {
