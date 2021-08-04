@@ -7,3 +7,7 @@ type Peer struct {
 	Protocol Protocol
 	LastSeen time.Time
 }
+
+func (p *Peer) touch() {
+	p.LastSeen = time.Now()
+}

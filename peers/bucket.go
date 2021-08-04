@@ -1,5 +1,7 @@
 package peers
 
+import "math/big"
+
 type bucket struct {
 	k int
 	lo Id
@@ -63,7 +65,49 @@ func (b *bucket) depth() int {
 	return len(prefix)
 }
 
-
 type bucketList struct {
-	buckets []bucket
+	k, splitLevel int
+	nodeId        Id
+	buckets []*bucket
+}
+
+func NewBucketList(k int, splitLevel int, nodeId Id) *bucketList {
+	b := NewBucket(k, big.NewInt(0), maxId)
+	buckets := make([]*bucket, 0, k)
+	buckets = append(buckets, b)
+	return &bucketList{k, splitLevel, nodeId, buckets}
+}
+
+func (bl *bucketList) find(id Id) *bucket {
+	for _, b := range bl.buckets {
+		if b.inRange(id) {
+			return b
+		}
+	}
+	return nil
+}
+
+func (bl *bucketList) add(peer Peer) {
+	peer.touch()
+	b := bl.find(peer.Id)
+	if b.isFull() {
+		if b.inRange(bl.nodeId) || b.depth() % bl.splitLevel != 0 {
+			bl.split(b, peer)
+		} else {
+			bl.pingLastSeen(b, peer)
+		}
+	} else if b.contains(peer.Id) {
+		b.remove(peer.Id)
+		b.add(peer)
+	} else {
+		b.add(peer)
+	}
+}
+
+func (bl *bucketList) split(bk *bucket, peer Peer) {
+
+}
+
+func (bl *bucketList) pingLastSeen(bk *bucket, peer Peer) {
+
 }
