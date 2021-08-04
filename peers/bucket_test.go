@@ -120,3 +120,20 @@ func TestFind(t *testing.T) {
 		t.Errorf("bucket should find peer, position: %d\n", i)
 	}
 }
+
+func TestDepth(t *testing.T) {
+	id1 := bigInt([]uint{191, 190, 188, 186, 74, 1})
+	id2 := bigInt([]uint{191, 190, 188, 180, 74, 1})
+	id3 := bigInt([]uint{191, 190, 188, 161, 74, 1})
+	lo := big.NewInt(0)
+	hi := maxId
+	bucket := NewBucket(20, lo, hi)
+	bucket.add(Peer{id1, nil, time.Now()})
+	bucket.add(Peer{id2, nil, time.Now()})
+	bucket.add(Peer{id3, nil, time.Now()})
+	depth := bucket.depth()
+	expected := 5
+	if depth != expected {
+		t.Errorf("incorrect depth: %d, expected: %d\n", depth, expected)
+	}
+}

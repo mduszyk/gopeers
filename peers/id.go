@@ -33,7 +33,7 @@ func ToBits(id Id) []bool {
 	return bools
 }
 
-func CommonPrefix(bools []bool, id Id) []bool {
+func SharedBits(bools []bool, id Id) []bool {
 	if len(bools) == 0 {
 		return bools
 	}

@@ -72,13 +72,13 @@ func TestToBits(t *testing.T) {
 	}
 }
 
-func TestPrefix(t *testing.T) {
+func TestSharedBits(t *testing.T) {
 	id1 := bigInt([]uint{191, 190, 188, 186, 74, 1})
 	id2 := bigInt([]uint{191, 190, 188, 180, 74, 1})
 	id3 := bigInt([]uint{191, 190, 188, 161, 74, 1})
 	prefix := ToBits(id1)
-	prefix = CommonPrefix(prefix, id2)
-	prefix = CommonPrefix(prefix, id3)
+	prefix = SharedBits(prefix, id2)
+	prefix = SharedBits(prefix, id3)
 	expected := []bool{true, true, false, true, false}
 	if !reflect.DeepEqual(prefix, expected) {
 		t.Errorf("incorrect prefix %v, expected %v\n", prefix, expected)

@@ -52,6 +52,17 @@ func (b *bucket) remove(id Id) bool {
 	return false
 }
 
+func (b *bucket) depth() int {
+	if len(b.peers) == 0 {
+		return 0
+	}
+	prefix := ToBits(b.peers[0].Id)
+	for _, peer := range b.peers[1:] {
+		prefix = SharedBits(prefix, peer.Id)
+	}
+	return len(prefix)
+}
+
 
 type bucketList struct {
 	buckets []bucket
