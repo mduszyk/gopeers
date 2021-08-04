@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"log"
 	"math/big"
+	"reflect"
 	"testing"
 )
 
@@ -45,12 +46,17 @@ func contains(s []uint, e uint) bool {
     return false
 }
 
-func TestToBits(t *testing.T) {
-	id := big.NewInt(0)
-	powers := []uint{2, 3, 7, 16, 65, 128, 160}
+func bigInt(powers []uint) *big.Int {
+	i := big.NewInt(0)
 	for _, p := range powers {
-		id.Add(id, new(big.Int).Lsh(big.NewInt(1), p))
+		i.Add(i, new(big.Int).Lsh(big.NewInt(1), p))
 	}
+	return i
+}
+
+func TestToBits(t *testing.T) {
+	powers := []uint{2, 3, 7, 16, 65, 128, 160}
+	id := bigInt(powers)
 	bits := ToBits(id)
 	for i, bit := range bits {
 		bitIndex := len(bits) - 1 - i
@@ -63,5 +69,18 @@ func TestToBits(t *testing.T) {
 				t.Errorf("bit %d should not be set\n", bitIndex)
 			}
 		}
+	}
+}
+
+func TestPrefix(t *testing.T) {
+	id1 := bigInt([]uint{191, 190, 188, 186, 74, 1})
+	id2 := bigInt([]uint{191, 190, 188, 180, 74, 1})
+	id3 := bigInt([]uint{191, 190, 188, 161, 74, 1})
+	prefix := ToBits(id1)
+	prefix = CommonPrefix(prefix, id2)
+	prefix = CommonPrefix(prefix, id3)
+	expected := []bool{true, true, false, true, false}
+	if !reflect.DeepEqual(prefix, expected) {
+		t.Errorf("incorrect prefix %v, expected %v\n", prefix, expected)
 	}
 }

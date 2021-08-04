@@ -33,9 +33,9 @@ func ToBits(id Id) []bool {
 	return bools
 }
 
-func Prefix(prefix []bool, id Id) []bool {
-	if len(prefix) == 0 {
-		return prefix
+func CommonPrefix(bools []bool, id Id) []bool {
+	if len(bools) == 0 {
+		return bools
 	}
 	n := 0
 	words := id.Bits()
@@ -44,12 +44,12 @@ func Prefix(prefix []bool, id Id) []bool {
 		for j := 1; j <= bits.UintSize; j++ {
 			mask := big.Word(1) << (bits.UintSize - j)
 			bit := word & mask > 0
-			if n < len(prefix) && bit == prefix[n] {
+			if n < len(bools) && bit == bools[n] {
 				n++
 			} else {
-				return prefix[:n]
+				return bools[:n]
 			}
 		}
 	}
-	return prefix[:n]
+	return bools[:n]
 }
