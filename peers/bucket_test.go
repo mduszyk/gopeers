@@ -94,13 +94,12 @@ func TestRemove(t *testing.T) {
 	if !bucket.contains(id) {
 		t.Errorf("bucket should contain peer\n")
 	}
-	if !bucket.remove(id) {
+	if !bucket.remove(5) {
 		t.Errorf("bucket should remove peer\n")
 	}
 	if bucket.contains(id) {
 		t.Errorf("bucket should not contain peer\n")
 	}
-
 }
 
 func TestFind(t *testing.T) {

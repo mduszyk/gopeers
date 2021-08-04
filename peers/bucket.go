@@ -45,8 +45,7 @@ func (b *bucket) add(peer Peer) bool {
 	return false
 }
 
-func (b *bucket) remove(id Id) bool {
-	i := b.find(id)
+func (b *bucket) remove(i int) bool {
 	if i > -1 {
 		b.peers = append(b.peers[:i], b.peers[i+1:]...)
 		return true
@@ -96,8 +95,8 @@ func (bl *bucketList) add(peer Peer) {
 		} else {
 			bl.pingLastSeen(b, peer)
 		}
-	} else if b.contains(peer.Id) {
-		b.remove(peer.Id)
+	} else if i := b.find(peer.Id); i > -1 {
+		b.remove(i)
 		b.add(peer)
 	} else {
 		b.add(peer)
