@@ -91,36 +91,48 @@ func NewBucketList(k int, splitLevel int, nodeId Id) *bucketList {
 	return &bucketList{k, splitLevel, nodeId, buckets}
 }
 
-func (bl *bucketList) find(id Id) *bucket {
-	for _, b := range bl.buckets {
+func (bl *bucketList) find(id Id) (int, *bucket) {
+	for i, b := range bl.buckets {
 		if b.inRange(id) {
-			return b
+			return i, b
 		}
 	}
-	return nil
+	return -1, nil
 }
 
 func (bl *bucketList) add(peer Peer) {
 	peer.touch()
-	b := bl.find(peer.Id)
+	i, b := bl.find(peer.Id)
 	if b.isFull() {
 		if b.inRange(bl.nodeId) || b.depth() % bl.splitLevel != 0 {
-			bl.split(b, peer)
+			bl.split(i, b)
+			bl.add(peer)
 		} else {
 			bl.pingLastSeen(b, peer)
 		}
-	} else if i := b.find(peer.Id); i > -1 {
-		b.remove(i)
+	} else if j := b.find(peer.Id); j > -1 {
+		b.remove(j)
 		b.add(peer)
 	} else {
 		b.add(peer)
 	}
 }
 
-func (bl *bucketList) split(bk *bucket, peer Peer) {
-
+func insert(a []*bucket, i int, value *bucket) []*bucket {
+    if len(a) == i { // nil or empty slice or after last element
+        return append(a, value)
+    }
+    a = append(a[:i+1], a[i:]...) // index < len(a)
+    a[i] = value
+    return a
 }
 
-func (bl *bucketList) pingLastSeen(bk *bucket, peer Peer) {
+func (bl *bucketList) split(i int, b *bucket) {
+	bucket1, bucket2 := b.split()
+	bl.buckets[i] = bucket1
+	bl.buckets = insert(bl.buckets, i + 1, bucket2)
+}
+
+func (bl *bucketList) pingLastSeen(b *bucket, peer Peer) {
 
 }
