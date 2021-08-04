@@ -121,9 +121,9 @@ func TestFind(t *testing.T) {
 }
 
 func TestDepth(t *testing.T) {
-	id1 := bigInt([]uint{191, 190, 188, 186, 74, 1})
-	id2 := bigInt([]uint{191, 190, 188, 180, 74, 1})
-	id3 := bigInt([]uint{191, 190, 188, 161, 74, 1})
+	id1 := intBits([]uint{191, 190, 188, 186, 74, 1})
+	id2 := intBits([]uint{191, 190, 188, 180, 74, 1})
+	id3 := intBits([]uint{191, 190, 188, 161, 74, 1})
 	lo := big.NewInt(0)
 	hi := maxId
 	bucket := NewBucket(20, lo, hi)
@@ -134,5 +134,42 @@ func TestDepth(t *testing.T) {
 	expected := 5
 	if depth != expected {
 		t.Errorf("incorrect depth: %d, expected: %d\n", depth, expected)
+	}
+}
+
+func TestSplit(t *testing.T) {
+	k := 20
+	bucket := NewBucket(k, big.NewInt(0), maxId)
+	base := big.NewInt(0)
+	for i := 0; i < k; i++ {
+		id := new(big.Int).Add(base, big.NewInt(int64(i)))
+		peer := Peer{id, nil, time.Now()}
+		if !bucket.add(peer) {
+			t.Errorf("bucket should add peer %d\n", i)
+		}
+		if i == 9 {
+			base = intBits([]uint{159})
+		}
+	}
+	bucket1, bucket2 := bucket.split()
+	if len(bucket1.peers) != k/2 {
+		t.Errorf("bucket should contain half of the elements\n")
+	}
+	base = big.NewInt(0)
+	for i := 0; i < k/2; i++ {
+		id := new(big.Int).Add(base, big.NewInt(int64(i)))
+		if !bucket1.contains(id) {
+			t.Errorf("bucket should contain id: %d\n", id)
+		}
+	}
+	if len(bucket2.peers) != k/2 {
+		t.Errorf("bucket should contain half of the elements\n")
+	}
+	base = intBits([]uint{159})
+	for i := 10; i < k; i++ {
+		id := new(big.Int).Add(base, big.NewInt(int64(i)))
+		if !bucket2.contains(id) {
+			t.Errorf("bucket should contain id: %d\n", id)
+		}
 	}
 }

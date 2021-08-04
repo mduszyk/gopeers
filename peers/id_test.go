@@ -46,21 +46,21 @@ func contains(s []uint, e uint) bool {
     return false
 }
 
-func bigInt(powers []uint) *big.Int {
+func intBits(trueBits []uint) *big.Int {
 	i := big.NewInt(0)
-	for _, p := range powers {
-		i.Add(i, new(big.Int).Lsh(big.NewInt(1), p))
+	for _, bit := range trueBits {
+		i.Add(i, new(big.Int).Lsh(big.NewInt(1), bit))
 	}
 	return i
 }
 
 func TestToBits(t *testing.T) {
-	powers := []uint{2, 3, 7, 16, 65, 128, 160}
-	id := bigInt(powers)
+	trueBits := []uint{2, 3, 7, 16, 65, 128, 160}
+	id := intBits(trueBits)
 	bits := ToBits(id)
 	for i, bit := range bits {
 		bitIndex := len(bits) - 1 - i
-		if contains(powers, uint(bitIndex)) {
+		if contains(trueBits, uint(bitIndex)) {
 			if !bit {
 				t.Errorf("bit %d should be set\n", bitIndex)
 			}
@@ -73,9 +73,9 @@ func TestToBits(t *testing.T) {
 }
 
 func TestSharedBits(t *testing.T) {
-	id1 := bigInt([]uint{191, 190, 188, 186, 74, 1})
-	id2 := bigInt([]uint{191, 190, 188, 180, 74, 1})
-	id3 := bigInt([]uint{191, 190, 188, 161, 74, 1})
+	id1 := intBits([]uint{191, 190, 188, 186, 74, 1})
+	id2 := intBits([]uint{191, 190, 188, 180, 74, 1})
+	id3 := intBits([]uint{191, 190, 188, 161, 74, 1})
 	prefix := ToBits(id1)
 	prefix = SharedBits(prefix, id2)
 	prefix = SharedBits(prefix, id3)

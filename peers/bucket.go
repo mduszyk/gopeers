@@ -64,6 +64,20 @@ func (b *bucket) depth() int {
 	return len(prefix)
 }
 
+func (b *bucket) split() (*bucket, *bucket) {
+	middle := new(big.Int).Div(new(big.Int).Add(b.lo, b.hi), big.NewInt(2))
+	b1 := NewBucket(b.k, b.lo, middle)
+	b2 := NewBucket(b.k, middle, b.hi)
+	for _, peer := range b.peers {
+		if b1.inRange(peer.Id) {
+			b1.add(peer)
+		} else {
+			b2.add(peer)
+		}
+	}
+	return b1, b2
+}
+
 type bucketList struct {
 	k, splitLevel int
 	nodeId        Id
