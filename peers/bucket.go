@@ -78,17 +78,31 @@ func (b *bucket) split() (*bucket, *bucket) {
 	return b1, b2
 }
 
+func (b *bucket) leastSeen() (int, Peer) {
+	peer := b.peers[0]
+	index := -1
+	for i, p := range b.peers[1:] {
+		if p.LastSeen.Before(peer.LastSeen) {
+			peer = p
+			index = i
+		}
+	}
+	return index, peer
+}
+
 type bucketList struct {
 	k, splitLevel int
-	nodeId        Id
+	nodeId Id
+	nodePeer Peer
 	buckets []*bucket
 }
 
-func NewBucketList(k int, splitLevel int, nodeId Id) *bucketList {
+func NewBucketList(k int, splitLevel int, nodeId Id, nodePeer Peer) *bucketList {
 	b := NewBucket(k, big.NewInt(0), maxId)
 	buckets := make([]*bucket, 0, k)
 	buckets = append(buckets, b)
-	return &bucketList{k, splitLevel, nodeId, buckets}
+	return &bucketList{k, splitLevel,
+		nodeId, nodePeer, buckets}
 }
 
 func (bl *bucketList) find(id Id) (int, *bucket) {
@@ -108,7 +122,7 @@ func (bl *bucketList) add(peer Peer) {
 			bl.split(i, b)
 			bl.add(peer)
 		} else {
-			bl.pingLastSeen(b, peer)
+			bl.pingLeastSeen(b)
 		}
 	} else if j := b.find(peer.Id); j > -1 {
 		b.remove(j)
@@ -133,6 +147,12 @@ func (bl *bucketList) split(i int, b *bucket) {
 	bl.buckets = insert(bl.buckets, i + 1, bucket2)
 }
 
-func (bl *bucketList) pingLastSeen(b *bucket, peer Peer) {
-
+func (bl *bucketList) pingLeastSeen(b *bucket) {
+	i, peer := b.leastSeen()
+	err := peer.Protocol.Ping(bl.nodePeer)
+	if err != nil {
+		b.remove(i)
+	} else {
+		peer.touch()
+	}
 }
