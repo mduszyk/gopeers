@@ -36,7 +36,7 @@ func TestInRange(t *testing.T) {
 	if !bucket.inRange(d) {
 		t.Errorf("random id %d should be in range\n", d)
 	}
-	e := Sha1Id([]byte("test123"))
+	e := Sha1Id([]byte("test0"))
 	if !bucket.inRange(e) {
 		t.Errorf("sha1 id %d should be in range\n", e)
 	}

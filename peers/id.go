@@ -9,7 +9,7 @@ import (
 
 type Id = *big.Int
 
-var maxId = new(big.Int).Lsh(big.NewInt(1), 159)
+var maxId = new(big.Int).Lsh(big.NewInt(1), 160)
 
 func RandomId() (Id, error) {
 	return rand.Int(rand.Reader, maxId)
