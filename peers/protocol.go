@@ -60,7 +60,7 @@ func (s *udpProtocolServer) PingRpc(payload udprpc.RpcPayload) (udprpc.RpcPayloa
 	if err != nil {
 		return nil, err
 	}
-	pingResult := pingPayload{s.rpcNode.Addr, s.p2pNode.id, id}
+	pingResult := pingPayload{s.rpcNode.Addr, s.p2pNode.peer.Id, id}
 	response, err := s.encoder.Encode(&pingResult)
 	return response, err
 }
@@ -80,7 +80,7 @@ func NewUdpProtocol(addr *net.UDPAddr, server *udpProtocolServer) *udpProtocol {
 func (p *udpProtocol) Ping(sender *Peer, randomId Id) (Id, error) {
 	pingReq := pingPayload{
 		p.server.rpcNode.Addr,
-		p.server.p2pNode.id,
+		p.server.p2pNode.peer.Id,
 		randomId,
 	}
 	req, err := p.server.encoder.Encode(&pingReq)
@@ -110,8 +110,7 @@ func NewUdpProtoNode(k, b int, address string) (*Peer, *udpProtocolServer, error
 		return nil, nil, err
 	}
 	peer := &Peer{Id: nodeId, LastSeen: time.Now()}
-	buckets := NewBucketList(k, b, peer)
-	node := NewP2pNode(nodeId, buckets)
+	node := NewP2pNode(k, b, peer)
 	protoServer, err := NewUdpProtocolServer(address, node)
 	return peer, protoServer, nil
 }
@@ -122,8 +121,7 @@ func NewMethodCallProtoNode(k, b int) (*Peer, *p2pNode, error) {
 		return nil, nil, err
 	}
 	peer := &Peer{Id: nodeId, LastSeen: time.Now()}
-	buckets := NewBucketList(k, b, peer)
-	node := NewP2pNode(nodeId, buckets)
+	node := NewP2pNode(k, b, peer)
 	peer.Proto = node
 	return peer, node, nil
 }

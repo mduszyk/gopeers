@@ -29,7 +29,7 @@ func TestUdpProtocol(t *testing.T) {
 	if echoId.Cmp(randomId) != 0 {
 		t.Errorf("ping returned invalid Id\n")
 	}
-	if i, _ := node1ProtoServer.p2pNode.buckets.find(node2ProtoServer.p2pNode.id); i < 0 {
+	if i, _ := node1ProtoServer.p2pNode.bList.find(node2ProtoServer.p2pNode.peer.Id); i < 0 {
 		t.Errorf("id of node 2 not added to bucket in node 1\n")
 	}
 }
@@ -56,7 +56,7 @@ func TestMethodCallProtocol(t *testing.T) {
 	if echoId.Cmp(randomId) != 0 {
 		t.Errorf("ping returned invalid Id\n")
 	}
-	if i, _ := p2pNode1.buckets.find(p2pNode2.id); i < 0 {
+	if i, _ := p2pNode1.bList.find(p2pNode2.peer.Id); i < 0 {
 		t.Errorf("id of node 2 not added to bucket in node 1\n")
 	}
 }
