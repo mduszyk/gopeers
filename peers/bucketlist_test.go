@@ -24,10 +24,10 @@ func TestAddFind(t *testing.T) {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		j, b := bucketList.find(id)
 		if j < 0 {
-			t.Errorf("bucket list should find bucket containing given id\n")
+			t.Errorf("bucket list should find bucket containing given Id\n")
 		}
 		if !b.contains(id) {
-			t.Errorf("bucket should contain given id\n")
+			t.Errorf("bucket should contain given Id\n")
 		}
 	}
 }
@@ -52,10 +52,10 @@ func TestBucketListSplit(t *testing.T) {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		j, b := bucketList.find(id)
 		if j < 0 {
-			t.Errorf("bucket list should find bucket containing given id\n")
+			t.Errorf("bucket list should find bucket containing given Id\n")
 		}
 		if !b.contains(id) {
-			t.Errorf("bucket should contain given id\n")
+			t.Errorf("bucket should contain given Id\n")
 		}
 	}
 }

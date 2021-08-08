@@ -63,8 +63,13 @@ func (bl *bucketList) split(i int, b *bucket) {
 
 func (bl *bucketList) pingLeastSeen(b *bucket) bool {
 	i, peer := b.leastSeen()
-	err := peer.Protocol.Ping(bl.node)
+	randomId, err := RandomId()
 	if err != nil {
+		b.remove(i)
+		return false
+	}
+	id, err := peer.Protocol.Ping(bl.node, randomId)
+	if id != randomId || err != nil {
 		b.remove(i)
 		return false
 	} else {

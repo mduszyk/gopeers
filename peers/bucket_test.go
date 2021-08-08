@@ -31,14 +31,14 @@ func TestInRange(t *testing.T) {
 	}
 	d, err := RandomId()
 	if err != nil {
-		t.Errorf("failed generating random id: %v\n", err)
+		t.Errorf("failed generating random Id: %v\n", err)
 	}
 	if !bucket.inRange(d) {
-		t.Errorf("random id %d should be in range\n", d)
+		t.Errorf("random Id %d should be in range\n", d)
 	}
 	e := Sha1Id([]byte("test0"))
 	if !bucket.inRange(e) {
-		t.Errorf("sha1 id %d should be in range\n", e)
+		t.Errorf("sha1 Id %d should be in range\n", e)
 	}
 
 }
@@ -159,7 +159,7 @@ func TestSplit(t *testing.T) {
 	for i := 0; i < k/2; i++ {
 		id := new(big.Int).Add(base, big.NewInt(int64(i)))
 		if !bucket1.contains(id) {
-			t.Errorf("bucket should contain id: %d\n", id)
+			t.Errorf("bucket should contain Id: %d\n", id)
 		}
 	}
 	if len(bucket2.peers) != k/2 {
@@ -169,7 +169,7 @@ func TestSplit(t *testing.T) {
 	for i := 10; i < k; i++ {
 		id := new(big.Int).Add(base, big.NewInt(int64(i)))
 		if !bucket2.contains(id) {
-			t.Errorf("bucket should contain id: %d\n", id)
+			t.Errorf("bucket should contain Id: %d\n", id)
 		}
 	}
 }
