@@ -68,7 +68,7 @@ func TestMethodCallProtocol(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed generating random Id: %v\n", err)
 	}
-	echoId, err := p2pNode1.Ping(node2Peer, randomId)
+	echoId, err := node1Peer.Protocol.Ping(node2Peer, randomId)
 	if err != nil {
 		t.Errorf("failed pinging: %v\n", err)
 	}
