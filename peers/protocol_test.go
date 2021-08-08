@@ -5,15 +5,18 @@ import (
 )
 
 func TestUdpProtocol(t *testing.T) {
-	node1Peer, p2pNode1, err := NewUdpProtoNode(20, 5, "localhost:5001")
+	node1Peer, node1ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:5001")
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2Peer, p2pNode2, err := NewUdpProtoNode(20, 5, "localhost:5002")
+	node2Peer, node2ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:5002")
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
+
+	node1ProtoServer.Connect(node2ProtoServer.rpcNode.Addr, node2Peer)
+	node2ProtoServer.Connect(node1ProtoServer.rpcNode.Addr, node1Peer)
 
 	randomId, err := RandomId()
 	if err != nil {
@@ -26,7 +29,7 @@ func TestUdpProtocol(t *testing.T) {
 	if echoId.Cmp(randomId) != 0 {
 		t.Errorf("ping returned invalid Id\n")
 	}
-	if i, _ := p2pNode1.buckets.find(p2pNode2.id); i < 0 {
+	if i, _ := node1ProtoServer.p2pNode.buckets.find(node2ProtoServer.p2pNode.id); i < 0 {
 		t.Errorf("id of node 2 not added to bucket in node 1\n")
 	}
 }

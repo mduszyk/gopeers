@@ -44,9 +44,8 @@ type pingPayload struct {
 	RandomId Id
 }
 
-
-func (s *udpProtocolServer) Connect(addr *net.UDPAddr) Protocol {
-	return NewUdpProtocol(addr, s)
+func (s *udpProtocolServer) Connect(addr *net.UDPAddr, peer *Peer) {
+	peer.Proto = NewUdpProtocol(addr, s)
 }
 
 func (s *udpProtocolServer) PingRpc(payload udprpc.RpcPayload) (udprpc.RpcPayload, error) {
@@ -55,8 +54,8 @@ func (s *udpProtocolServer) PingRpc(payload udprpc.RpcPayload) (udprpc.RpcPayloa
 	if err != nil {
 		return nil, err
 	}
-	protocol := s.Connect(req.Addr)
-	sender := &Peer{req.Id, protocol, time.Now()}
+	sender := &Peer{Id: req.Id, LastSeen: time.Now()}
+	s.Connect(req.Addr, sender)
 	id, err := s.p2pNode.Ping(sender, req.RandomId)
 	if err != nil {
 		return nil, err
@@ -78,7 +77,7 @@ func NewUdpProtocol(addr *net.UDPAddr, server *udpProtocolServer) *udpProtocol {
 	}
 }
 
-func (p *udpProtocol) Ping(_ *Peer, randomId Id) (Id, error) {
+func (p *udpProtocol) Ping(sender *Peer, randomId Id) (Id, error) {
 	pingReq := pingPayload{
 		p.server.rpcNode.Addr,
 		p.server.p2pNode.id,
@@ -105,7 +104,7 @@ func (p *udpProtocol) FindNode(sender *Peer) error {
 }
 
 
-func NewUdpProtoNode(k, b int, address string) (*Peer, *p2pNode, error) {
+func NewUdpProtoNode(k, b int, address string) (*Peer, *udpProtocolServer, error) {
 	nodeId, err := RandomId()
 	if err != nil {
 		return nil, nil, err
@@ -114,8 +113,7 @@ func NewUdpProtoNode(k, b int, address string) (*Peer, *p2pNode, error) {
 	buckets := NewBucketList(k, b, peer)
 	node := NewP2pNode(nodeId, buckets)
 	protoServer, err := NewUdpProtocolServer(address, node)
-	peer.Proto = protoServer.Connect(protoServer.rpcNode.Addr)
-	return peer, node, nil
+	return peer, protoServer, nil
 }
 
 func NewMethodCallProtoNode(k, b int) (*Peer, *p2pNode, error) {
