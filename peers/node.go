@@ -47,16 +47,16 @@ func (node *p2pNode) pingPeer(peer *Peer) error {
 
 func (node *p2pNode) addPeer(peer *Peer) bool {
 	peer.touch()
-	i, b := node.bList.find(peer.Id)
-	if b.isFull() {
-		if b.inRange(node.peer.Id) || b.depth() % node.b != 0 {
+	i, bucket := node.bList.find(peer.Id)
+	if bucket.isFull() {
+		if bucket.inRange(node.peer.Id) || bucket.depth() % node.b != 0 {
 			node.bList.split(i)
 			return node.addPeer(peer)
 		} else {
-			j, leastSeenPeer := b.leastSeen()
+			j, leastSeenPeer := bucket.leastSeen()
 			err := node.pingPeer(leastSeenPeer)
 			if err != nil {
-				b.remove(j)
+				bucket.remove(j)
 				return node.addPeer(peer)
 			} else {
 				leastSeenPeer.touch()
@@ -64,10 +64,10 @@ func (node *p2pNode) addPeer(peer *Peer) bool {
 			}
 		}
 	} else {
-		if j := b.find(peer.Id); j > -1 {
-			b.remove(j)
+		if j := bucket.find(peer.Id); j > -1 {
+			bucket.remove(j)
 		}
-		return b.add(peer)
+		return bucket.add(peer)
 	}
 }
 
