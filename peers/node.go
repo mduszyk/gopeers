@@ -1,6 +1,9 @@
 package peers
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 type p2pNode struct {
 	b int
@@ -8,13 +11,22 @@ type p2pNode struct {
 	bList *bucketList
 }
 
-func NewP2pNode(k, b int, peer *Peer) *p2pNode {
+func NewP2pNode(k, b int, id Id) *p2pNode {
 	node := &p2pNode{
 		b: b,
-		peer: peer,
 		bList: NewBucketList(k),
 	}
+	node.peer = &Peer{id, node, time.Now()}
 	return node
+}
+
+func NewRandomIdP2pNode(k, b int) (*p2pNode, error) {
+	nodeId, err := RandomId()
+	if err != nil {
+		return nil, err
+	}
+	node := NewP2pNode(k, b, nodeId)
+	return node, nil
 }
 
 func (node *p2pNode) pingPeer(peer *Peer) error {

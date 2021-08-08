@@ -104,24 +104,12 @@ func (p *udpProtocol) FindNode(sender *Peer) error {
 }
 
 
-func NewUdpProtoNode(k, b int, address string) (*Peer, *udpProtocolServer, error) {
+func NewUdpProtoNode(k, b int, address string) (*udpProtocolServer, error) {
 	nodeId, err := RandomId()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	peer := &Peer{Id: nodeId, LastSeen: time.Now()}
-	node := NewP2pNode(k, b, peer)
+	node := NewP2pNode(k, b, nodeId)
 	protoServer, err := NewUdpProtocolServer(address, node)
-	return peer, protoServer, nil
-}
-
-func NewMethodCallProtoNode(k, b int) (*Peer, *p2pNode, error) {
-	nodeId, err := RandomId()
-	if err != nil {
-		return nil, nil, err
-	}
-	peer := &Peer{Id: nodeId, LastSeen: time.Now()}
-	node := NewP2pNode(k, b, peer)
-	peer.Proto = node
-	return peer, node, nil
+	return protoServer, nil
 }

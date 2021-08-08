@@ -9,10 +9,9 @@ import (
 
 func TestAddFind(t *testing.T) {
 	nodeId := big.NewInt(0)
-	nodePeer := &Peer{nodeId, nil, time.Now()}
 	k := 20
 	b := 5
-	node := NewP2pNode(k, b, nodePeer)
+	node := NewP2pNode(k, b, nodeId)
 	for i := 0; i < k; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
@@ -34,10 +33,9 @@ func TestAddFind(t *testing.T) {
 
 func TestBucketListSplit(t *testing.T) {
 	nodeId := big.NewInt(0)
-	nodePeer := &Peer{nodeId, nil, time.Now()}
 	k := 20
 	b := 5
-	node := NewP2pNode(k, b, nodePeer)
+	node := NewP2pNode(k, b, nodeId)
 	for i := 0; i < k+1; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}

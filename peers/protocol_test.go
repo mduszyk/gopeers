@@ -5,14 +5,23 @@ import (
 )
 
 func TestUdpProtocol(t *testing.T) {
-	node1Peer, node1ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:5001")
+	node1ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:5001")
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2Peer, node2ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:5002")
+	node2ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:5002")
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
+	}
+
+	node1Peer, err := NewRandomIdPeer()
+	if err != nil {
+		t.Errorf("failed creating peer: %v\n", err)
+	}
+	node2Peer, err := NewRandomIdPeer()
+	if err != nil {
+		t.Errorf("failed creating peer: %v\n", err)
 	}
 
 	node1ProtoServer.Connect(node2ProtoServer.rpcNode.Addr, node2Peer)
@@ -35,12 +44,12 @@ func TestUdpProtocol(t *testing.T) {
 }
 
 func TestMethodCallProtocol(t *testing.T) {
-	node1Peer, p2pNode1, err := NewMethodCallProtoNode(20, 5)
+	p2pNode1, err := NewRandomIdP2pNode(20, 5)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2Peer, p2pNode2, err := NewMethodCallProtoNode(20, 5)
+	p2pNode2, err := NewRandomIdP2pNode(20, 5)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -49,7 +58,7 @@ func TestMethodCallProtocol(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed generating random Id: %v\n", err)
 	}
-	echoId, err := node1Peer.Proto.Ping(node2Peer, randomId)
+	echoId, err := p2pNode1.Ping(p2pNode2.peer, randomId)
 	if err != nil {
 		t.Errorf("failed pinging: %v\n", err)
 	}
