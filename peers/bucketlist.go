@@ -4,8 +4,8 @@ import "math/big"
 
 type bucketList struct {
 	k, splitLevel int
-	node *Peer
-	buckets []*bucket
+	nodePeer      *Peer
+	buckets       []*bucket
 }
 
 func NewBucketList(k int, splitLevel int, node *Peer) *bucketList {
@@ -28,7 +28,7 @@ func (bl *bucketList) add(peer *Peer) bool {
 	peer.touch()
 	i, b := bl.find(peer.Id)
 	if b.isFull() {
-		if b.inRange(bl.node.Id) || b.depth() % bl.splitLevel != 0 {
+		if b.inRange(bl.nodePeer.Id) || b.depth() % bl.splitLevel != 0 {
 			bl.split(i, b)
 			return bl.add(peer)
 		} else {
@@ -68,7 +68,7 @@ func (bl *bucketList) pingLeastSeen(b *bucket) bool {
 		b.remove(i)
 		return false
 	}
-	id, err := peer.Proto.Ping(bl.node, randomId)
+	id, err := peer.Proto.Ping(bl.nodePeer, randomId)
 	if id != randomId || err != nil {
 		b.remove(i)
 		return false
