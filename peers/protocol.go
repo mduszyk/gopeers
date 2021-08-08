@@ -7,8 +7,8 @@ import (
 )
 
 type Protocol interface {
-	Ping(sender Peer, randomId Id) (Id, error)
-	FindNode(sender Peer) error
+	Ping(sender *Peer, randomId Id) (Id, error)
+	FindNode(sender *Peer) error
 }
 
 type udpProtocolServer struct {
@@ -56,7 +56,7 @@ func (s *udpProtocolServer) PingRpc(payload udprpc.RpcPayload) (udprpc.RpcPayloa
 		return nil, err
 	}
 	protocol := s.Connect(req.Addr)
-	sender := Peer{req.Id, protocol, time.Now()}
+	sender := &Peer{req.Id, protocol, time.Now()}
 	id, err := s.p2pNode.Ping(sender, req.RandomId)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func NewUdpProtocol(addr *net.UDPAddr, server *udpProtocolServer) *udpProtocol {
 	}
 }
 
-func (p *udpProtocol) Ping(_ Peer, randomId Id) (Id, error) {
+func (p *udpProtocol) Ping(_ *Peer, randomId Id) (Id, error) {
 	pingReq := pingPayload{
 		p.server.rpcNode.Addr,
 		p.server.p2pNode.id,
@@ -100,6 +100,32 @@ func (p *udpProtocol) Ping(_ Peer, randomId Id) (Id, error) {
 	return payload.RandomId, nil
 }
 
-func (p *udpProtocol) FindNode(sender Peer) error {
+func (p *udpProtocol) FindNode(sender *Peer) error {
 	return nil
+}
+
+
+func NewUdpProtoNode(k, b int, address string) (*Peer, *p2pNode, error) {
+	nodeId, err := RandomId()
+	if err != nil {
+		return nil, nil, err
+	}
+	peer := &Peer{Id: nodeId, LastSeen: time.Now()}
+	buckets := NewBucketList(k, b, peer)
+	node := NewP2pNode(nodeId, buckets)
+	protoServer, err := NewUdpProtocolServer(address, node)
+	peer.Proto = protoServer.Connect(protoServer.rpcNode.Addr)
+	return peer, node, nil
+}
+
+func NewMethodCallProtoNode(k, b int) (*Peer, *p2pNode, error) {
+	nodeId, err := RandomId()
+	if err != nil {
+		return nil, nil, err
+	}
+	peer := &Peer{Id: nodeId, LastSeen: time.Now()}
+	buckets := NewBucketList(k, b, peer)
+	node := NewP2pNode(nodeId, buckets)
+	peer.Proto = node
+	return peer, node, nil
 }

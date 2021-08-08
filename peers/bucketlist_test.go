@@ -9,13 +9,13 @@ import (
 
 func TestAddFind(t *testing.T) {
 	nodeId := big.NewInt(0)
-	nodePeer := Peer{nodeId, nil, time.Now()}
+	nodePeer := &Peer{nodeId, nil, time.Now()}
 	k := 20
 	splitLevelB := 5
 	bucketList := NewBucketList(k, splitLevelB, nodePeer)
 	for i := 0; i < k; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
-		peer := Peer{id, nil, time.Now()}
+		peer := &Peer{id, nil, time.Now()}
 		if !bucketList.add(peer) {
 			t.Errorf("bucket should add peer %d\n", i)
 		}
@@ -34,13 +34,13 @@ func TestAddFind(t *testing.T) {
 
 func TestBucketListSplit(t *testing.T) {
 	nodeId := big.NewInt(0)
-	nodePeer := Peer{nodeId, nil, time.Now()}
+	nodePeer := &Peer{nodeId, nil, time.Now()}
 	k := 20
 	splitLevelB := 5
 	bucketList := NewBucketList(k, splitLevelB, nodePeer)
 	for i := 0; i < k+1; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
-		peer := Peer{id, nil, time.Now()}
+		peer := &Peer{id, nil, time.Now()}
 		if !bucketList.add(peer) {
 			t.Errorf("bucket should add peer %d\n", i)
 		}

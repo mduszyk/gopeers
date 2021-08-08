@@ -3,8 +3,8 @@ package peers
 import "time"
 
 type Peer struct {
-	Id Id
-	Protocol Protocol
+	Id       Id
+	Proto    Protocol
 	LastSeen time.Time
 }
 

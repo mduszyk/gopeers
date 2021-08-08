@@ -6,11 +6,11 @@ type bucket struct {
 	k int
 	lo Id
 	hi Id
-	peers []Peer
+	peers []*Peer
 }
 
 func NewBucket(k int, lo Id, hi Id) *bucket {
-	peers := make([]Peer, 0, k)
+	peers := make([]*Peer, 0, k)
 	return &bucket{k, lo, hi, peers}
 }
 
@@ -37,7 +37,7 @@ func (b *bucket) contains(id Id) bool {
 	return b.find(id) > -1
 }
 
-func (b *bucket) add(peer Peer) bool {
+func (b *bucket) add(peer *Peer) bool {
 	if !b.isFull() {
 		b.peers = append(b.peers, peer)
 		return true
@@ -78,7 +78,7 @@ func (b *bucket) split() (*bucket, *bucket) {
 	return b1, b2
 }
 
-func (b *bucket) leastSeen() (int, Peer) {
+func (b *bucket) leastSeen() (int, *Peer) {
 	peer := b.peers[0]
 	index := -1
 	for i, p := range b.peers[1:] {

@@ -48,7 +48,7 @@ func TestAdd(t *testing.T) {
 	hi := maxId
 	bucket := NewBucket(20, lo, hi)
 	id := Sha1Id([]byte("test123"))
-	peer := Peer{id, nil, time.Now()}
+	peer := &Peer{id, nil, time.Now()}
 	if !bucket.add(peer) {
 		t.Errorf("bucket should add peer\n")
 	}
@@ -64,7 +64,7 @@ func TestFull(t *testing.T) {
 	bucket := NewBucket(k, lo, hi)
 	for i := 0; i < k; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
-		peer := Peer{id, nil, time.Now()}
+		peer := &Peer{id, nil, time.Now()}
 		if !bucket.add(peer) {
 			t.Errorf("bucket should add peer %d\n", i)
 		}
@@ -73,7 +73,7 @@ func TestFull(t *testing.T) {
 		t.Errorf("bucket should be full\n")
 	}
 	id := Sha1Id([]byte("test123"))
-	peer := Peer{id, nil, time.Now()}
+	peer := &Peer{id, nil, time.Now()}
 	if bucket.add(peer) {
 		t.Errorf("bucket should not add peer\n")
 	}
@@ -85,7 +85,7 @@ func TestRemove(t *testing.T) {
 	bucket := NewBucket(20, lo, hi)
 	for i := 0; i < 10; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
-		peer := Peer{id, nil, time.Now()}
+		peer := &Peer{id, nil, time.Now()}
 		if !bucket.add(peer) {
 			t.Errorf("bucket should add peer %d\n", i)
 		}
@@ -108,7 +108,7 @@ func TestFind(t *testing.T) {
 	bucket := NewBucket(20, lo, hi)
 	for i := 0; i < 10; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
-		peer := Peer{id, nil, time.Now()}
+		peer := &Peer{id, nil, time.Now()}
 		if !bucket.add(peer) {
 			t.Errorf("bucket should add peer %d\n", i)
 		}
@@ -127,9 +127,9 @@ func TestDepth(t *testing.T) {
 	lo := big.NewInt(0)
 	hi := maxId
 	bucket := NewBucket(20, lo, hi)
-	bucket.add(Peer{id1, nil, time.Now()})
-	bucket.add(Peer{id2, nil, time.Now()})
-	bucket.add(Peer{id3, nil, time.Now()})
+	bucket.add(&Peer{id1, nil, time.Now()})
+	bucket.add(&Peer{id2, nil, time.Now()})
+	bucket.add(&Peer{id3, nil, time.Now()})
 	depth := bucket.depth()
 	expected := 5
 	if depth != expected {
@@ -143,7 +143,7 @@ func TestSplit(t *testing.T) {
 	base := big.NewInt(0)
 	for i := 0; i < k; i++ {
 		id := new(big.Int).Add(base, big.NewInt(int64(i)))
-		peer := Peer{id, nil, time.Now()}
+		peer := &Peer{id, nil, time.Now()}
 		if !bucket.add(peer) {
 			t.Errorf("bucket should add peer %d\n", i)
 		}
