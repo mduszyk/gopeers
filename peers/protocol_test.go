@@ -24,7 +24,7 @@ func TestUdpProtocol(t *testing.T) {
 	node2BucketList := NewBucketList(20, 5, node2Peer)
 	p2pNode2 := NewP2pNode(node2Id, node2BucketList)
 	protoServer2, err := NewUdpProtocolServer("localhost:5002", p2pNode2)
-	node2Peer.Protocol = protoServer1.Connect(protoServer2.rpcNode.Addr)
+	node2Peer.Protocol = protoServer2.Connect(protoServer2.rpcNode.Addr)
 
 	node1Protocol := protoServer2.Connect(protoServer1.rpcNode.Addr)
 	//node2Protocol := protoServer1.Connect(protoServer2.rpcNode.Addr)
