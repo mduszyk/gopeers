@@ -5,16 +5,12 @@ type p2pNode struct {
 	buckets *bucketList
 }
 
-func NewP2pNode(buckets *bucketList) (*p2pNode, error) {
-	id, err := RandomId()
-	if err != nil {
-		return nil, err
-	}
+func NewP2pNode(id Id, buckets *bucketList) *p2pNode {
 	node := &p2pNode{
 		id: id,
 		buckets: buckets,
 	}
-	return node, nil
+	return node
 }
 
 func (node *p2pNode) Ping(sender Peer, randomId Id) (Id, error) {

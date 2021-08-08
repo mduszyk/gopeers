@@ -6,43 +6,41 @@ import (
 )
 
 func TestUdpProtocol(t *testing.T) {
-
-	nodePeer1 := Peer{LastSeen: time.Now()}
-	buckets1 := NewBucketList(20, 5, nodePeer1)
-	p2pNode1, err := NewP2pNode(buckets1)
+	node1Id, err := RandomId()
 	if err != nil {
-		t.Errorf("failed creating p2p node: %v\n", err)
+		t.Errorf("failed generating random id: %v\n", err)
 	}
+	node1Peer := Peer{Id: node1Id, LastSeen: time.Now()}
+	node1BucketList := NewBucketList(20, 5, node1Peer)
+	p2pNode1 := NewP2pNode(node1Id, node1BucketList)
 	protoServer1, err := NewUdpProtocolServer("localhost:5001", p2pNode1)
-	nodePeer1.Id = p2pNode1.id
-	nodePeer1.Protocol = protoServer1.Connect(protoServer1.rpcNode.Addr)
+	node1Peer.Protocol = protoServer1.Connect(protoServer1.rpcNode.Addr)
 
-	nodePeer2 := Peer{LastSeen: time.Now()}
-	buckets2 := NewBucketList(20, 5, nodePeer2)
-	p2pNode2, err := NewP2pNode(buckets2)
+	node2Id, err := RandomId()
 	if err != nil {
-		t.Errorf("failed creating p2p node: %v\n", err)
+		t.Errorf("failed generating random id: %v\n", err)
 	}
+	node2Peer := Peer{Id: node2Id, LastSeen: time.Now()}
+	node2BucketList := NewBucketList(20, 5, node2Peer)
+	p2pNode2 := NewP2pNode(node2Id, node2BucketList)
 	protoServer2, err := NewUdpProtocolServer("localhost:5002", p2pNode2)
-	nodePeer2.Id = p2pNode2.id
-	nodePeer2.Protocol = protoServer1.Connect(protoServer2.rpcNode.Addr)
+	node2Peer.Protocol = protoServer1.Connect(protoServer2.rpcNode.Addr)
 
-	proto1 := protoServer2.Connect(protoServer1.rpcNode.Addr)
-	proto2 := protoServer1.Connect(protoServer2.rpcNode.Addr)
+	node1Protocol := protoServer2.Connect(protoServer1.rpcNode.Addr)
+	//node2Protocol := protoServer1.Connect(protoServer2.rpcNode.Addr)
 
-	sender := Peer{protoServer2.p2pNode.id, proto2, time.Now()}
 	randomId, err := RandomId()
 	if err != nil {
 		t.Errorf("failed generating random Id: %v\n", err)
 	}
-	echoId, err := proto1.Ping(sender, randomId)
+	echoId, err := node1Protocol.Ping(node2Peer, randomId)
 	if err != nil {
 		t.Errorf("failed pinging: %v\n", err)
 	}
 	if echoId.Cmp(randomId) != 0 {
 		t.Errorf("ping returned invalid Id\n")
 	}
-	if i, _ := p2pNode1.buckets.find(p2pNode2.id); i < 0 {
+	if i, _ := p2pNode1.buckets.find(node2Id); i < 0 {
 		t.Errorf("id of node 2 not added to bucket in node 1\n")
 	}
 }
