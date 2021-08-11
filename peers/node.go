@@ -49,7 +49,7 @@ func (node *p2pNode) addPeer(peer *Peer) bool {
 	peer.touch()
 	i, bucket := node.bList.find(peer.Id)
 	if bucket.isFull() {
-		if bucket.inRange(node.peer.Id) || bucket.depth() % node.b != 0 {
+		if bucket.inRange(node.peer.Id) || bucket.depth % node.b != 0 {
 			node.bList.split(i)
 			return node.addPeer(peer)
 		} else {

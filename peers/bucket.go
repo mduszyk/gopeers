@@ -1,17 +1,20 @@
 package peers
 
-import "math/big"
+import (
+	"math/big"
+	"sort"
+)
 
 type bucket struct {
-	k int
+	k, depth int
 	lo Id
 	hi Id
 	peers []*Peer
 }
 
-func NewBucket(k int, lo Id, hi Id) *bucket {
+func NewBucket(k, depth int, lo Id, hi Id) *bucket {
 	peers := make([]*Peer, 0, k)
-	return &bucket{k, lo, hi, peers}
+	return &bucket{k, depth, lo, hi, peers}
 }
 
 // lo <= Id < hi
@@ -53,21 +56,21 @@ func (b *bucket) remove(i int) bool {
 	return false
 }
 
-func (b *bucket) depth() int {
-	if len(b.peers) == 0 {
-		return 0
-	}
-	prefix := ToBits(b.peers[0].Id)
-	for _, peer := range b.peers[1:] {
-		prefix = SharedBits(prefix, peer.Id)
-	}
-	return len(prefix)
-}
+//func (b *bucket) depth() int {
+//	if len(b.peers) == 0 {
+//		return 0
+//	}
+//	prefix := ToBits(b.peers[0].Id)
+//	for _, peer := range b.peers[1:] {
+//		prefix = SharedBits(prefix, peer.Id)
+//	}
+//	return len(prefix)
+//}
 
 func (b *bucket) split() (*bucket, *bucket) {
 	middle := new(big.Int).Div(new(big.Int).Add(b.lo, b.hi), big.NewInt(2))
-	b1 := NewBucket(b.k, b.lo, middle)
-	b2 := NewBucket(b.k, middle, b.hi)
+	b1 := NewBucket(b.k, b.depth + 1, b.lo, middle)
+	b2 := NewBucket(b.k, b.depth + 1, middle, b.hi)
 	for _, peer := range b.peers {
 		if b1.inRange(peer.Id) {
 			b1.add(peer)
@@ -88,4 +91,15 @@ func (b *bucket) leastSeen() (int, *Peer) {
 		}
 	}
 	return index, peer
+}
+
+func (b *bucket) closest(id Id, n int) []*Peer {
+	peers := make([]*Peer, len(b.peers))
+	copy(peers, b.peers)
+	sort.Slice(peers, func(i, j int) bool {
+		di := new(big.Int).Xor(id, peers[i].Id)
+		dj := new(big.Int).Xor(id, peers[j].Id)
+		return di.Cmp(dj) == -1
+	})
+	return peers[:min(n, len(peers))]
 }

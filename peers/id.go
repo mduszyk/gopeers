@@ -23,13 +23,10 @@ func Sha1Id(data []byte) Id {
 func ToBits(id Id) []bool {
 	words := id.Bits()
 	bools := make([]bool, 0, bits.UintSize * len(words))
-	for i := len(words) - 1; i >= 0; i-- {
-		word := words[i]
-		for j := 1; j <= bits.UintSize; j++ {
-			mask := big.Word(1) << (bits.UintSize - j)
-			bools = append(bools, word & mask > 0)
-		}
-	}
+	ForeachBit(id, func(bit bool) bool {
+		bools = append(bools, bit)
+		return true
+	})
 	return bools
 }
 
@@ -38,18 +35,27 @@ func SharedBits(bools []bool, id Id) []bool {
 		return bools
 	}
 	n := 0
+	ForeachBit(id, func(bit bool) bool {
+		if n < len(bools) && bit == bools[n] {
+			n++
+		} else {
+			return false
+		}
+		return true
+	})
+	return bools[:n]
+}
+
+func ForeachBit(id Id, f func(bit bool) bool) {
 	words := id.Bits()
 	for i := len(words) - 1; i >= 0; i-- {
 		word := words[i]
 		for j := 1; j <= bits.UintSize; j++ {
 			mask := big.Word(1) << (bits.UintSize - j)
 			bit := word & mask > 0
-			if n < len(bools) && bit == bools[n] {
-				n++
-			} else {
-				return bools[:n]
+			if !f(bit) {
+				return
 			}
 		}
 	}
-	return bools[:n]
 }

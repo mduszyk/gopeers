@@ -10,7 +10,7 @@ import (
 func TestInRange(t *testing.T) {
 	lo := big.NewInt(0)
 	hi := maxId
-	bucket := NewBucket(20, lo, hi)
+	bucket := NewBucket(20, 0, lo, hi)
 	if !bucket.inRange(lo) {
 		t.Errorf("low should be in range\n")
 	}
@@ -46,7 +46,7 @@ func TestInRange(t *testing.T) {
 func TestAdd(t *testing.T) {
 	lo := big.NewInt(0)
 	hi := maxId
-	bucket := NewBucket(20, lo, hi)
+	bucket := NewBucket(20, 0, lo, hi)
 	id := Sha1Id([]byte("test123"))
 	peer := &Peer{id, nil, time.Now()}
 	if !bucket.add(peer) {
@@ -61,7 +61,7 @@ func TestFull(t *testing.T) {
 	k := 20
 	lo := big.NewInt(0)
 	hi := maxId
-	bucket := NewBucket(k, lo, hi)
+	bucket := NewBucket(k, 0, lo, hi)
 	for i := 0; i < k; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
@@ -82,7 +82,7 @@ func TestFull(t *testing.T) {
 func TestRemove(t *testing.T) {
 	lo := big.NewInt(0)
 	hi := maxId
-	bucket := NewBucket(20, lo, hi)
+	bucket := NewBucket(20, 0, lo, hi)
 	for i := 0; i < 10; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
@@ -105,7 +105,7 @@ func TestRemove(t *testing.T) {
 func TestFind(t *testing.T) {
 	lo := big.NewInt(0)
 	hi := maxId
-	bucket := NewBucket(20, lo, hi)
+	bucket := NewBucket(20, 0, lo, hi)
 	for i := 0; i < 10; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
@@ -120,26 +120,26 @@ func TestFind(t *testing.T) {
 	}
 }
 
-func TestDepth(t *testing.T) {
-	id1 := intBits([]uint{191, 190, 188, 186, 74, 1})
-	id2 := intBits([]uint{191, 190, 188, 180, 74, 1})
-	id3 := intBits([]uint{191, 190, 188, 161, 74, 1})
-	lo := big.NewInt(0)
-	hi := maxId
-	bucket := NewBucket(20, lo, hi)
-	bucket.add(&Peer{id1, nil, time.Now()})
-	bucket.add(&Peer{id2, nil, time.Now()})
-	bucket.add(&Peer{id3, nil, time.Now()})
-	depth := bucket.depth()
-	expected := 5
-	if depth != expected {
-		t.Errorf("incorrect depth: %d, expected: %d\n", depth, expected)
-	}
-}
+//func TestDepth(t *testing.T) {
+//	id1 := intBits([]uint{191, 190, 188, 186, 74, 1})
+//	id2 := intBits([]uint{191, 190, 188, 180, 74, 1})
+//	id3 := intBits([]uint{191, 190, 188, 161, 74, 1})
+//	lo := big.NewInt(0)
+//	hi := maxId
+//	bucket := NewBucket(20, lo, hi)
+//	bucket.add(&Peer{id1, nil, time.Now()})
+//	bucket.add(&Peer{id2, nil, time.Now()})
+//	bucket.add(&Peer{id3, nil, time.Now()})
+//	depth := bucket.depth()
+//	expected := 5
+//	if depth != expected {
+//		t.Errorf("incorrect depth: %d, expected: %d\n", depth, expected)
+//	}
+//}
 
 func TestSplit(t *testing.T) {
 	k := 20
-	bucket := NewBucket(k, big.NewInt(0), maxId)
+	bucket := NewBucket(k, 0, big.NewInt(0), maxId)
 	base := big.NewInt(0)
 	for i := 0; i < k; i++ {
 		id := new(big.Int).Add(base, big.NewInt(int64(i)))
