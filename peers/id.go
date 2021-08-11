@@ -50,8 +50,7 @@ func SharedBits(bools []bool, id Id) []bool {
 
 func ForeachBit(id Id, f func(bit bool) bool) {
 	words := id.Bits()
-	n := len(words) * bits.UintSize
-	skipBits := n - IdBits
+	skipBits := len(words) * bits.UintSize - IdBits
 	skipWords := 0
 	if skipBits > 0 {
 		skipWords = skipBits / bits.UintSize
@@ -61,8 +60,7 @@ func ForeachBit(id Id, f func(bit bool) bool) {
 		word := words[i]
 		for j := 1 + skipBits; j <= bits.UintSize; j++ {
 			mask := big.Word(1) << (bits.UintSize - j)
-			bit := word & mask > 0
-			if !f(bit) {
+			if !f(word & mask > 0) {
 				return
 			}
 		}
