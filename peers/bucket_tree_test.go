@@ -30,3 +30,45 @@ func TestTreeFind(t *testing.T) {
 		t.Errorf("found wrong node for id: %0160b\n", peer.Id)
 	}
 }
+
+func TestTreeClosest(t *testing.T) {
+	tree := NewBucketTree(20)
+	tree.root.split()
+	tree.root.left.split()
+	tree.root.right.split()
+	tree.root.right.right.split()
+	setBits1 := []uint{IdBits - 1, IdBits - 2, IdBits - 3}
+	bucket1 := tree.root.right.right.right.bucket
+	for i := 0; i < 10; i++ {
+		setBits1 = append(setBits1, uint(i))
+		peer := &Peer{Id: intBits(setBits1)}
+		if !bucket1.add(peer) {
+			t.Errorf("failed adding to bucket\n")
+		}
+	}
+	setBits2 := []uint{IdBits - 1, IdBits - 2}
+	bucket2 := tree.root.right.right.left.bucket
+	for i := 0; i < 5; i++ {
+		setBits2 = append(setBits2, uint(i))
+		peer := &Peer{Id: intBits(setBits2)}
+		if !bucket2.add(peer) {
+			t.Errorf("failed adding to bucket\n")
+		}
+	}
+	setBits3 := []uint{IdBits - 1}
+	bucket3 := tree.root.right.left.bucket
+	for i := 0; i < 5; i++ {
+		setBits3 = append(setBits3, uint(i))
+		peer := &Peer{Id: intBits(setBits3)}
+		if !bucket3.add(peer) {
+			t.Errorf("failed adding to bucket\n")
+		}
+	}
+	setBits := []uint{IdBits - 1, IdBits - 2, IdBits - 3, 10}
+	peer := &Peer{Id: intBits(setBits)}
+	n := 18
+	peers := tree.closest(peer.Id, n)
+	if len(peers) != n {
+		t.Errorf("returned wrong number of close peers: %d\n", len(peers))
+	}
+}

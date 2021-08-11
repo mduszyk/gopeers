@@ -49,9 +49,7 @@ func (tree *bucketTree) find(id Id) *node {
 }
 
 func appendRight(peers []*Peer, node *node, id Id, n int) int {
-	if len(peers) == n {
-		return 0
-	} else if node.bucket != nil {
+	if node.bucket != nil {
 		closest := node.bucket.closest(id, n)
 		copy(peers, closest)
 		return len(closest)
@@ -63,9 +61,7 @@ func appendRight(peers []*Peer, node *node, id Id, n int) int {
 }
 
 func appendLeft(peers []*Peer, node *node, id Id, n int) int {
-	if len(peers) == n {
-		return 0
-	} else if node.bucket != nil {
+	if node.bucket != nil {
 		closest := node.bucket.closest(id, n)
 		copy(peers, closest)
 		return len(closest)
