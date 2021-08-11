@@ -17,10 +17,9 @@ func NewBucket(k, depth int, lo Id, hi Id) *bucket {
 	return &bucket{k, depth, lo, hi, peers}
 }
 
-// lo <= Id < hi
 func (b *bucket) inRange(id Id) bool {
-	r := b.lo.Cmp(id)
-	return (r == 0 || r == -1) && b.hi.Cmp(id) == 1
+	// lo <= id < hi
+	return lte(b.lo, id) && lt(id, b.hi)
 }
 
 func (b *bucket) isFull() bool {
@@ -29,7 +28,7 @@ func (b *bucket) isFull() bool {
 
 func (b *bucket) find(id Id) int {
    for i, peer := range b.peers {
-	   if id.Cmp(peer.Id) == 0 {
+	   if eq(id, peer.Id) {
 		   return i
 	   }
 	}
@@ -97,9 +96,9 @@ func (b *bucket) closest(id Id, n int) []*Peer {
 	peers := make([]*Peer, len(b.peers))
 	copy(peers, b.peers)
 	sort.Slice(peers, func(i, j int) bool {
-		di := new(big.Int).Xor(id, peers[i].Id)
-		dj := new(big.Int).Xor(id, peers[j].Id)
-		return di.Cmp(dj) == -1
+		di := xor(id, peers[i].Id)
+		dj := xor(id, peers[j].Id)
+		return lt(di, dj)
 	})
 	return peers[:min(n, len(peers))]
 }

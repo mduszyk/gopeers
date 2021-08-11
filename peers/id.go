@@ -69,3 +69,20 @@ func ForeachBit(id Id, f func(bit bool) bool) {
 		skipBits = 0
 	}
 }
+
+func xor(a Id, b Id) Id {
+	return new(big.Int).Xor(a, b)
+}
+
+func eq(a Id, b Id) bool {
+	return a.Cmp(b) == 0
+}
+
+func lt(a Id, b Id) bool {
+	return a.Cmp(b) == -1
+}
+
+func lte(a Id, b Id) bool {
+	r := a.Cmp(b)
+	return r == 0 || r == -1
+}

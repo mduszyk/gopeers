@@ -1,7 +1,6 @@
 package peers
 
 import (
-	"math/big"
 	"sort"
 	"testing"
 )
@@ -88,13 +87,13 @@ func TestTreeClosest(t *testing.T) {
 		t.Errorf("returned wrong number of close peers: %d\n", len(peers))
 	}
 	sort.Slice(allPeers, func(i, j int) bool {
-		di := new(big.Int).Xor(peer.Id, allPeers[i].Id)
-		dj := new(big.Int).Xor(peer.Id, allPeers[j].Id)
-		return di.Cmp(dj) == -1
+		di := xor(peer.Id, allPeers[i].Id)
+		dj := xor(peer.Id, allPeers[j].Id)
+		return lt(di, dj)
 	})
 	expected := allPeers[:n]
 	for i := 0; i < n; i++ {
-		if expected[i].Id.Cmp(peers[i].Id) != 0 {
+		if !eq(expected[i].Id, peers[i].Id) {
 			t.Errorf("ids don't match\n")
 		}
 	}

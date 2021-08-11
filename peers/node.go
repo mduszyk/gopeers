@@ -39,7 +39,7 @@ func (node *p2pNode) pingPeer(peer *Peer) error {
 		return err
 	}
 
-	if echoId != randomId {
+	if !eq(echoId, randomId) {
 		return errors.New("ping random id not echoed")
 	}
 	return nil

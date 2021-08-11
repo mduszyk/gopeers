@@ -35,7 +35,7 @@ func TestUdpProtocol(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed pinging: %v\n", err)
 	}
-	if echoId.Cmp(randomId) != 0 {
+	if !eq(echoId, randomId) {
 		t.Errorf("ping returned invalid Id\n")
 	}
 	if n := node1ProtoServer.p2pNode.buckets.find(node2ProtoServer.p2pNode.peer.Id); n.bucket == nil {
@@ -62,7 +62,7 @@ func TestMethodCallProtocol(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed pinging: %v\n", err)
 	}
-	if echoId.Cmp(randomId) != 0 {
+	if !eq(echoId, randomId) {
 		t.Errorf("ping returned invalid Id\n")
 	}
 	if n := p2pNode1.buckets.find(p2pNode2.peer.Id); n.bucket == nil {
