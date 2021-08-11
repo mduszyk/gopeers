@@ -12,10 +12,10 @@ type node struct {
 }
 
 func (n *node) split() {
-	bucket1, bucket2 := n.bucket.split()
+	left, right := n.bucket.split()
 	n.bucket = nil
-	n.left = &node{n, nil, nil, bucket1}
-	n.right = &node{n, nil, nil, bucket2}
+	n.left = &node{parent: n, bucket: left}
+	n.right = &node{parent: n, bucket: right}
 }
 
 type bucketTree struct {
