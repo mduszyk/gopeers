@@ -55,17 +55,6 @@ func (b *bucket) remove(i int) bool {
 	return false
 }
 
-//func (b *bucket) depth() int {
-//	if len(b.peers) == 0 {
-//		return 0
-//	}
-//	prefix := ToBits(b.peers[0].Id)
-//	for _, peer := range b.peers[1:] {
-//		prefix = SharedBits(prefix, peer.Id)
-//	}
-//	return len(prefix)
-//}
-
 func (b *bucket) split() (*bucket, *bucket) {
 	middle := new(big.Int).Div(new(big.Int).Add(b.lo, b.hi), big.NewInt(2))
 	b1 := NewBucket(b.k, b.depth + 1, b.lo, middle)

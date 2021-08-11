@@ -22,32 +22,6 @@ func Sha1Id(data []byte) Id {
 	return new(big.Int).SetBytes(hash[:])
 }
 
-func ToBits(id Id) []bool {
-	words := id.Bits()
-	bools := make([]bool, 0, bits.UintSize * len(words))
-	ForeachBit(id, func(bit bool) bool {
-		bools = append(bools, bit)
-		return true
-	})
-	return bools
-}
-
-func SharedBits(bools []bool, id Id) []bool {
-	if len(bools) == 0 {
-		return bools
-	}
-	n := 0
-	ForeachBit(id, func(bit bool) bool {
-		if n < len(bools) && bit == bools[n] {
-			n++
-		} else {
-			return false
-		}
-		return true
-	})
-	return bools[:n]
-}
-
 func ForeachBit(id Id, f func(bit bool) bool) {
 	words := id.Bits()
 	skipBits := len(words) * bits.UintSize - IdBits

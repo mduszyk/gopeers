@@ -4,7 +4,6 @@ import (
 	"crypto/sha1"
 	"log"
 	"math/big"
-	"reflect"
 	"testing"
 )
 
@@ -37,52 +36,12 @@ func TestRandomId(t *testing.T) {
 	}
 }
 
-func contains(s []uint, e uint) bool {
-    for _, a := range s {
-        if a == e {
-            return true
-        }
-    }
-    return false
-}
-
 func intBits(trueBits []uint) *big.Int {
 	i := big.NewInt(0)
 	for _, bit := range trueBits {
 		i.Add(i, new(big.Int).Lsh(big.NewInt(1), bit))
 	}
 	return i
-}
-
-func TestToBits(t *testing.T) {
-	trueBits := []uint{2, 3, 7, 16, 65, 128, 160}
-	id := intBits(trueBits)
-	bits := ToBits(id)
-	for i, bit := range bits {
-		bitIndex := len(bits) - 1 - i
-		if contains(trueBits, uint(bitIndex)) {
-			if !bit {
-				t.Errorf("bit %d should be set\n", bitIndex)
-			}
-		} else {
-			if bit {
-				t.Errorf("bit %d should not be set\n", bitIndex)
-			}
-		}
-	}
-}
-
-func TestSharedBits(t *testing.T) {
-	id1 := intBits([]uint{159, 158, 156, 154, 74, 1})
-	id2 := intBits([]uint{159, 158, 156, 154, 74, 1})
-	id3 := intBits([]uint{159, 158, 156, 153, 74, 1})
-	prefix := ToBits(id1)
-	prefix = SharedBits(prefix, id2)
-	prefix = SharedBits(prefix, id3)
-	expected := []bool{true, true, false, true, false}
-	if !reflect.DeepEqual(prefix, expected) {
-		t.Errorf("incorrect prefix %v, expected %v\n", prefix, expected)
-	}
 }
 
 func TestForeachBit(t *testing.T) {
