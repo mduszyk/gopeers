@@ -8,13 +8,13 @@ import (
 type p2pNode struct {
 	b int
 	peer *Peer
-	bList *bucketList
+	buckets *bucketTree
 }
 
 func NewP2pNode(k, b int, id Id) *p2pNode {
 	node := &p2pNode{
 		b: b,
-		bList: NewBucketList(k),
+		buckets: NewBucketTree(k),
 	}
 	node.peer = &Peer{id, node, time.Now()}
 	return node
@@ -47,16 +47,16 @@ func (node *p2pNode) pingPeer(peer *Peer) error {
 
 func (node *p2pNode) addPeer(peer *Peer) bool {
 	peer.touch()
-	i, bucket := node.bList.find(peer.Id)
-	if bucket.isFull() {
-		if bucket.inRange(node.peer.Id) || bucket.depth % node.b != 0 {
-			node.bList.split(i)
+	n := node.buckets.find(peer.Id)
+	if n.bucket.isFull() {
+		if n.bucket.inRange(node.peer.Id) || n.bucket.depth % node.b != 0 {
+			n.split()
 			return node.addPeer(peer)
 		} else {
-			j, leastSeenPeer := bucket.leastSeen()
+			j, leastSeenPeer := n.bucket.leastSeen()
 			err := node.pingPeer(leastSeenPeer)
 			if err != nil {
-				bucket.remove(j)
+				n.bucket.remove(j)
 				return node.addPeer(peer)
 			} else {
 				leastSeenPeer.touch()
@@ -64,10 +64,10 @@ func (node *p2pNode) addPeer(peer *Peer) bool {
 			}
 		}
 	} else {
-		if j := bucket.find(peer.Id); j > -1 {
-			bucket.remove(j)
+		if j := n.bucket.find(peer.Id); j > -1 {
+			n.bucket.remove(j)
 		}
-		return bucket.add(peer)
+		return n.bucket.add(peer)
 	}
 }
 
