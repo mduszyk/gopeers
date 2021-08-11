@@ -9,7 +9,9 @@ import (
 
 type Id = *big.Int
 
-var maxId = new(big.Int).Lsh(big.NewInt(1), 160)
+const IdBits = 160
+
+var maxId = new(big.Int).Lsh(big.NewInt(1), IdBits)
 
 func RandomId() (Id, error) {
 	return rand.Int(rand.Reader, maxId)
@@ -48,14 +50,22 @@ func SharedBits(bools []bool, id Id) []bool {
 
 func ForeachBit(id Id, f func(bit bool) bool) {
 	words := id.Bits()
-	for i := len(words) - 1; i >= 0; i-- {
+	n := len(words) * bits.UintSize
+	skipBits := n - IdBits
+	skipWords := 0
+	if skipBits > 0 {
+		skipWords = skipBits / bits.UintSize
+		skipBits = skipBits - skipWords * bits.UintSize
+	}
+	for i := len(words) - 1 - skipWords; i >= 0; i-- {
 		word := words[i]
-		for j := 1; j <= bits.UintSize; j++ {
+		for j := 1 + skipBits; j <= bits.UintSize; j++ {
 			mask := big.Word(1) << (bits.UintSize - j)
 			bit := word & mask > 0
 			if !f(bit) {
 				return
 			}
 		}
+		skipBits = 0
 	}
 }

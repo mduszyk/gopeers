@@ -1,16 +1,32 @@
 package peers
 
 import (
-	"fmt"
-	"math"
 	"testing"
 )
 
 func TestTreeFind(t *testing.T) {
-	a := make([]int, 20)
-	b := []int{1, 2, 3}
-	c := []int{4, 5, 6, 7}
-	copy(a, b)
-	copy(a[len(b):], c)
-	fmt.Printf("%d, %v\n", len(a), a[:int(math.Min(float64(len(a)), 30))])
+	tree := NewBucketTree(20)
+	tree.root.split()
+	tree.root.left.split()
+	tree.root.right.split()
+	peer := &Peer{Id: intBits([]uint{IdBits - 1, IdBits - 2})}
+	n := tree.find(peer.Id)
+	if n != tree.root.right.right {
+		t.Errorf("found wrong node for id: %0160b\n", peer.Id)
+	}
+	peer = &Peer{Id: intBits([]uint{IdBits - 1})}
+	n = tree.find(peer.Id)
+	if n != tree.root.right.left {
+		t.Errorf("found wrong node for id: %0160b\n", peer.Id)
+	}
+	peer = &Peer{Id: intBits([]uint{IdBits - 2})}
+	n = tree.find(peer.Id)
+	if n != tree.root.left.right {
+		t.Errorf("found wrong node for id: %0160b\n", peer.Id)
+	}
+	peer = &Peer{Id: intBits([]uint{0})}
+	n = tree.find(peer.Id)
+	if n != tree.root.left.left {
+		t.Errorf("found wrong node for id: %0160b\n", peer.Id)
+	}
 }

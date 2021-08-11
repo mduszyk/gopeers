@@ -73,14 +73,68 @@ func TestToBits(t *testing.T) {
 }
 
 func TestSharedBits(t *testing.T) {
-	id1 := intBits([]uint{191, 190, 188, 186, 74, 1})
-	id2 := intBits([]uint{191, 190, 188, 180, 74, 1})
-	id3 := intBits([]uint{191, 190, 188, 161, 74, 1})
+	id1 := intBits([]uint{159, 158, 156, 154, 74, 1})
+	id2 := intBits([]uint{159, 158, 156, 154, 74, 1})
+	id3 := intBits([]uint{159, 158, 156, 153, 74, 1})
 	prefix := ToBits(id1)
 	prefix = SharedBits(prefix, id2)
 	prefix = SharedBits(prefix, id3)
 	expected := []bool{true, true, false, true, false}
 	if !reflect.DeepEqual(prefix, expected) {
 		t.Errorf("incorrect prefix %v, expected %v\n", prefix, expected)
+	}
+}
+
+func TestForeachBit(t *testing.T) {
+	id := intBits([]uint{IdBits - 1, IdBits - 3})
+	bits := make([]bool, 0, IdBits)
+	ForeachBit(id, func(bit bool) bool {
+		bits = append(bits, bit)
+		return true
+	})
+	if len(bits) != IdBits {
+		t.Errorf("invalid count of bits: %d\n", len(bits))
+	}
+	if !bits[0] || bits[1] || !bits[2] {
+		t.Errorf("invalid bits iteration\n")
+	}
+	id = intBits([]uint{IdBits / 2})
+	bits = make([]bool, 0, IdBits)
+	ForeachBit(id, func(bit bool) bool {
+		bits = append(bits, bit)
+		return true
+	})
+	if len(bits) != IdBits {
+		t.Errorf("invalid count of bits: %d\n", len(bits))
+	}
+	id = intBits([]uint{70})
+	bits = make([]bool, 0, IdBits)
+	ForeachBit(id, func(bit bool) bool {
+		bits = append(bits, bit)
+		return true
+	})
+	if len(bits) != IdBits {
+		t.Errorf("invalid count of bits: %d\n", len(bits))
+	}
+	id = intBits([]uint{10})
+	bits = make([]bool, 0, IdBits)
+	ForeachBit(id, func(bit bool) bool {
+		bits = append(bits, bit)
+		return true
+	})
+	if len(bits) != IdBits {
+		t.Errorf("invalid count of bits: %d\n", len(bits))
+	}
+	id = intBits([]uint{IdBits * 2, IdBits - 1, IdBits - 3})
+	bits = make([]bool, 0, IdBits)
+	ForeachBit(id, func(bit bool) bool {
+		bits = append(bits, bit)
+		return true
+	})
+	if len(bits) != IdBits {
+		t.Errorf("invalid count of bits: %d\n", len(bits))
+	}
+	if !bits[0] || bits[1] || !bits[2] {
+		t.Errorf("invalid bits iteration\n")
 	}
 }

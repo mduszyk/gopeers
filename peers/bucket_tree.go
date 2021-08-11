@@ -11,6 +11,13 @@ type node struct {
 	bucket *bucket
 }
 
+func (n *node) split() {
+	bucket1, bucket2 := n.bucket.split()
+	n.bucket = nil
+	n.left = &node{n, nil, nil, bucket1}
+	n.right = &node{n, nil, nil, bucket2}
+}
+
 type bucketTree struct {
 	k int
 	root *node
@@ -39,13 +46,6 @@ func (tree *bucketTree) find(id Id) *node {
 		return true
 	})
 	return n
-}
-
-func (tree *bucketTree) split(n *node) {
-	bucket1, bucket2 := n.bucket.split()
-	n.bucket = nil
-	n.left = &node{n, nil, nil, bucket1}
-	n.right = &node{n, nil, nil, bucket2}
 }
 
 func appendRight(peers []*Peer, node *node, id Id, n int) int {
