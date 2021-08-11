@@ -52,5 +52,5 @@ func (bl *bucketList) closest(id Id, n int) []*Peer {
 		dj := new(big.Int).Xor(id, peers[j].Id)
 		return di.Cmp(dj) == -1
 	})
-	return peers[:n]
+	return peers[:min(n, len(peers))]
 }
