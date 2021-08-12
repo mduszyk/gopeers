@@ -1,2 +1,2 @@
 # gopeers
-Peer-to-peer GO library implementing Kademlia algorithm.
+Go implementation of Kademlia algorithm.
