@@ -78,6 +78,7 @@ func (node *p2pNode) Ping(sender *Peer, randomId Id) (Id, error) {
 	return randomId, nil
 }
 
-func (node *p2pNode) FindNode(sender *Peer) error {
-	return nil
+func (node *p2pNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
+	peers := node.buckets.closest(id, node.buckets.k)
+	return peers, nil
 }

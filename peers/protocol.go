@@ -8,7 +8,7 @@ import (
 
 type Protocol interface {
 	Ping(sender *Peer, randomId Id) (Id, error)
-	FindNode(sender *Peer) error
+	FindNode(sender *Peer, id Id) ([]*Peer, error)
 }
 
 type udpProtocolServer struct {
@@ -99,8 +99,8 @@ func (p *udpProtocol) Ping(sender *Peer, randomId Id) (Id, error) {
 	return payload.RandomId, nil
 }
 
-func (p *udpProtocol) FindNode(sender *Peer) error {
-	return nil
+func (p *udpProtocol) FindNode(sender *Peer, id Id) ([]*Peer, error) {
+	return nil, nil
 }
 
 
