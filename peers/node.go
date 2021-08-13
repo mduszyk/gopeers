@@ -86,6 +86,7 @@ func (node *p2pNode) join(peer *Peer) error {
 
 	buckets := node.tree.buckets(peer.Id)
 	if len(buckets) > 1 {
+		// skip bucket containing peer.Id
 		for _, b := range buckets[1:] {
 			err = node.refresh(b)
 			if err != nil {
