@@ -87,15 +87,33 @@ func (node *p2pNode) join(peer *Peer) error {
 	buckets := node.tree.buckets(peer.Id)
 	if len(buckets) > 1 {
 		for _, b := range buckets[1:] {
-			node.refresh(b)
+			err = node.refresh(b)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	return nil
 }
 
-func (node *p2pNode) refresh(b *bucket) {
-	// TODO
+func (node *p2pNode) refresh(b *bucket) error {
+	id, err := RandomIdRange(b.lo, b.hi)
+	if err != nil {
+		return err
+	}
+
+	for _, peer := range b.peers {
+		peers, err := peer.Proto.FindNode(node.peer, id)
+		if err != nil {
+			return err
+		}
+		for _, p := range peers {
+			node.add(p)
+		}
+	}
+
+	return nil
 }
 
 // Protocol interface

@@ -17,6 +17,15 @@ func RandomId() (Id, error) {
 	return rand.Int(rand.Reader, maxId)
 }
 
+func RandomIdRange(lo Id, hi Id) (Id, error) {
+	d := new(big.Int).Sub(hi, lo)
+	id, err := rand.Int(rand.Reader, d)
+	if err != nil {
+		return nil, err
+	}
+	return new(big.Int).Add(lo, id), nil
+}
+
 func Sha1Id(data []byte) Id {
 	hash := sha1.Sum(data)
 	return new(big.Int).SetBytes(hash[:])
