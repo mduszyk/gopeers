@@ -54,14 +54,16 @@ func (node *p2pNode) addPeer(peer *Peer) bool {
 			return node.addPeer(peer)
 		} else {
 			j, leastSeenPeer := n.bucket.leastSeen()
-			err := node.pingPeer(leastSeenPeer)
-			if err != nil {
-				n.bucket.remove(j)
-				return node.addPeer(peer)
-			} else {
-				leastSeenPeer.touch()
-				return false
+			if j > -1 {
+				err := node.pingPeer(leastSeenPeer)
+				if err != nil {
+					n.bucket.remove(j)
+					return node.addPeer(peer)
+				} else {
+					leastSeenPeer.touch()
+				}
 			}
+			return false
 		}
 	} else {
 		if j := n.bucket.find(peer.Id); j > -1 {

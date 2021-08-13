@@ -70,15 +70,10 @@ func (b *bucket) split() (*bucket, *bucket) {
 }
 
 func (b *bucket) leastSeen() (int, *Peer) {
-	peer := b.peers[0]
-	index := -1
-	for i, p := range b.peers[1:] {
-		if p.LastSeen.Before(peer.LastSeen) {
-			peer = p
-			index = i
-		}
+	if len(b.peers) > 0 {
+		return 0, b.peers[0]
 	}
-	return index, peer
+	return -1, nil
 }
 
 func (b *bucket) closest(id Id, n int) []*Peer {
