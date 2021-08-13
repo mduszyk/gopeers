@@ -15,7 +15,7 @@ func TestAddFind(t *testing.T) {
 	for i := 0; i < k; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
-		if !node.addPeer(peer) {
+		if !node.add(peer) {
 			t.Errorf("bucket should add peer %d\n", i)
 		}
 	}
@@ -36,7 +36,7 @@ func TestBucketListSplit(t *testing.T) {
 	for i := 0; i < k+1; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
-		if !node.addPeer(peer) {
+		if !node.add(peer) {
 			t.Errorf("bucket should add peer %d\n", i)
 		}
 	}

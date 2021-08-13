@@ -45,20 +45,20 @@ func (node *p2pNode) pingPeer(peer *Peer) error {
 	return nil
 }
 
-func (node *p2pNode) addPeer(peer *Peer) bool {
+func (node *p2pNode) add(peer *Peer) bool {
 	peer.touch()
 	n := node.buckets.find(peer.Id)
 	if n.bucket.isFull() {
 		if n.bucket.inRange(node.peer.Id) || n.bucket.depth % node.b != 0 {
 			n.split()
-			return node.addPeer(peer)
+			return node.add(peer)
 		} else {
 			j, leastSeenPeer := n.bucket.leastSeen()
 			if j > -1 {
 				err := node.pingPeer(leastSeenPeer)
 				if err != nil {
 					n.bucket.remove(j)
-					return node.addPeer(peer)
+					return node.add(peer)
 				} else {
 					leastSeenPeer.touch()
 				}
@@ -76,11 +76,12 @@ func (node *p2pNode) addPeer(peer *Peer) bool {
 // Protocol interface
 
 func (node *p2pNode) Ping(sender *Peer, randomId Id) (Id, error) {
-	node.addPeer(sender)
+	node.add(sender)
 	return randomId, nil
 }
 
 func (node *p2pNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
+	node.add(sender)
 	peers := node.buckets.closest(id, node.buckets.k)
 	return peers, nil
 }
