@@ -11,22 +11,16 @@ type node struct {
 	bucket *bucket
 }
 
-func (n *node) split() {
-	left, right := n.bucket.split()
-	n.bucket = nil
-	n.left = &node{parent: n, bucket: left}
-	n.right = &node{parent: n, bucket: right}
-}
-
 type bucketTree struct {
 	k int
+	size int
 	root *node
 }
 
 func NewBucketTree(k int) *bucketTree {
 	b := NewBucket(k, 0, big.NewInt(0), maxId)
 	root := &node{nil, nil, nil, b}
-	return &bucketTree{k, root}
+	return &bucketTree{k, 1, root}
 }
 
 func (tree *bucketTree) find(id Id) *node {
@@ -46,6 +40,14 @@ func (tree *bucketTree) find(id Id) *node {
 		return true
 	})
 	return n
+}
+
+func (tree *bucketTree) split(n *node) {
+	left, right := n.bucket.split()
+	n.bucket = nil
+	n.left = &node{parent: n, bucket: left}
+	n.right = &node{parent: n, bucket: right}
+	tree.size += 1
 }
 
 func appendRight(peers []*Peer, node *node, id Id, n int) int {
@@ -90,4 +92,40 @@ func (tree *bucketTree) closest(id Id, n int) []*Peer {
 		node = node.parent
 	}
 	return peers[:m]
+}
+
+func (tree *bucketTree) buckets(id Id) []*bucket {
+	node := tree.find(id)
+	buckets := make([]*bucket, tree.size)
+	child := node
+	node = node.parent
+	m := 0
+	for node != nil {
+		if child == node.left {
+			m += appendRightBuckets(buckets, node.right)
+		} else {
+			m += appendLeftBuckets(buckets[m:], node.left)
+		}
+	}
+	return buckets[:m]
+}
+
+func appendRightBuckets(buckets []*bucket, node *node) int {
+	if node != nil {
+		return 0
+	} else {
+		m := appendRightBuckets(buckets, node.left)
+		m += appendRightBuckets(buckets[m:], node.right)
+		return m
+	}
+}
+
+func appendLeftBuckets(buckets []*bucket, node *node) int {
+	if node != nil {
+		return 0
+	} else {
+		m := appendLeftBuckets(buckets, node.right)
+		m += appendLeftBuckets(buckets[m:], node.left)
+		return m
+	}
 }

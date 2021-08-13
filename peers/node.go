@@ -8,13 +8,13 @@ import (
 type p2pNode struct {
 	b int
 	peer *Peer
-	buckets *bucketTree
+	tree *bucketTree
 }
 
 func NewP2pNode(k, b int, id Id) *p2pNode {
 	node := &p2pNode{
 		b: b,
-		buckets: NewBucketTree(k),
+		tree: NewBucketTree(k),
 	}
 	node.peer = &Peer{id, node, time.Now()}
 	return node
@@ -47,10 +47,10 @@ func (node *p2pNode) pingPeer(peer *Peer) error {
 
 func (node *p2pNode) add(peer *Peer) bool {
 	peer.touch()
-	n := node.buckets.find(peer.Id)
+	n := node.tree.find(peer.Id)
 	if n.bucket.isFull() {
 		if n.bucket.inRange(node.peer.Id) || n.bucket.depth % node.b != 0 {
-			n.split()
+			node.tree.split(n)
 			return node.add(peer)
 		} else {
 			j, leastSeenPeer := n.bucket.leastSeen()
@@ -73,6 +73,31 @@ func (node *p2pNode) add(peer *Peer) bool {
 	}
 }
 
+func (node *p2pNode) join(peer *Peer) error {
+	node.add(peer)
+
+	peers, err := peer.Proto.FindNode(node.peer, node.peer.Id)
+	if err != nil {
+		return err
+	}
+	for _, p := range peers {
+		node.add(p)
+	}
+
+	buckets := node.tree.buckets(peer.Id)
+	if len(buckets) > 1 {
+		for _, b := range buckets[1:] {
+			node.refresh(b)
+		}
+	}
+
+	return nil
+}
+
+func (node *p2pNode) refresh(b *bucket) {
+	// TODO
+}
+
 // Protocol interface
 
 func (node *p2pNode) Ping(sender *Peer, randomId Id) (Id, error) {
@@ -82,6 +107,6 @@ func (node *p2pNode) Ping(sender *Peer, randomId Id) (Id, error) {
 
 func (node *p2pNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
 	node.add(sender)
-	peers := node.buckets.closest(id, node.buckets.k)
+	peers := node.tree.closest(id, node.tree.k)
 	return peers, nil
 }

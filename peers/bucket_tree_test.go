@@ -7,9 +7,9 @@ import (
 
 func TestTreeFind(t *testing.T) {
 	tree := NewBucketTree(20)
-	tree.root.split()
-	tree.root.left.split()
-	tree.root.right.split()
+	tree.split(tree.root)
+	tree.split(tree.root.left)
+	tree.split(tree.root.right)
 	peer := &Peer{Id: intBits([]uint{IdBits - 1, IdBits - 2})}
 	n := tree.find(peer.Id)
 	if n != tree.root.right.right {
@@ -34,10 +34,10 @@ func TestTreeFind(t *testing.T) {
 
 func TestTreeClosest(t *testing.T) {
 	tree := NewBucketTree(20)
-	tree.root.split()
-	tree.root.left.split()
-	tree.root.right.split()
-	tree.root.right.right.split()
+	tree.split(tree.root)
+	tree.split(tree.root.left)
+	tree.split(tree.root.right)
+	tree.split(tree.root.right.right)
 	allPeers := make([]*Peer, 0, 100)
 	setBits1 := []uint{IdBits - 1, IdBits - 2, IdBits - 3}
 	bucket1 := tree.root.right.right.right.bucket
