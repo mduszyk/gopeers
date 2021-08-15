@@ -124,4 +124,21 @@ func TestTreeBuckets(t *testing.T) {
 	if buckets[3] != tree.root.right.right.bucket {
 		t.Errorf("invlid bucket\n")
 	}
+	id := intBits([]uint{IdBits-1})
+	buckets = tree.buckets(id)
+	if len(buckets) != tree.size {
+		t.Errorf("invlid buckets count\n")
+	}
+	if buckets[0] != tree.root.right.left.bucket {
+		t.Errorf("invlid bucket\n")
+	}
+	if buckets[1] != tree.root.right.right.bucket {
+		t.Errorf("invlid bucket\n")
+	}
+	if buckets[2] != tree.root.left.right.bucket {
+		t.Errorf("invlid bucket\n")
+	}
+	if buckets[3] != tree.root.left.left.bucket {
+		t.Errorf("invlid bucket\n")
+	}
 }

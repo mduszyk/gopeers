@@ -125,7 +125,7 @@ func appendRightBuckets(buckets []*bucket, node *node) int {
 }
 
 func appendLeftBuckets(buckets []*bucket, node *node) int {
-	if node != nil {
+	if node.bucket != nil {
 		buckets[0] = node.bucket
 		return 1
 	} else {
