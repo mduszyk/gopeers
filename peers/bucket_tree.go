@@ -50,30 +50,6 @@ func (tree *bucketTree) split(n *node) {
 	tree.size += 1
 }
 
-func appendRight(peers []*Peer, node *node, id Id, n int) int {
-	if node.bucket != nil {
-		closest := node.bucket.closest(id, n)
-		copy(peers, closest)
-		return len(closest)
-	} else {
-		m := appendRight(peers, node.left, id, n)
-		m += appendRight(peers, node.right, id, n - m)
-		return m
-	}
-}
-
-func appendLeft(peers []*Peer, node *node, id Id, n int) int {
-	if node.bucket != nil {
-		closest := node.bucket.closest(id, n)
-		copy(peers, closest)
-		return len(closest)
-	} else {
-		m := appendLeft(peers, node.right, id, n)
-		m += appendLeft(peers[m:], node.left, id, n - m)
-		return m
-	}
-}
-
 func (tree *bucketTree) closest(id Id, n int) []*Peer {
 	node := tree.find(id)
 	peers := make([]*Peer, n)
@@ -84,9 +60,9 @@ func (tree *bucketTree) closest(id Id, n int) []*Peer {
 	node = node.parent
 	for node != nil && m < n {
 		if child == node.left {
-			m += appendRight(peers[m:], node.right, id, n - m)
+			m += appendRightPeers(peers[m:], node.right, id, n - m)
 		} else {
-			m += appendLeft(peers[m:], node.left, id, n - m)
+			m += appendLeftPeers(peers[m:], node.left, id, n - m)
 		}
 		child = node
 		node = node.parent
@@ -94,25 +70,53 @@ func (tree *bucketTree) closest(id Id, n int) []*Peer {
 	return peers[:m]
 }
 
+func appendRightPeers(peers []*Peer, node *node, id Id, n int) int {
+	if node.bucket != nil {
+		closest := node.bucket.closest(id, n)
+		copy(peers, closest)
+		return len(closest)
+	} else {
+		m := appendRightPeers(peers, node.left, id, n)
+		m += appendRightPeers(peers, node.right, id, n - m)
+		return m
+	}
+}
+
+func appendLeftPeers(peers []*Peer, node *node, id Id, n int) int {
+	if node.bucket != nil {
+		closest := node.bucket.closest(id, n)
+		copy(peers, closest)
+		return len(closest)
+	} else {
+		m := appendLeftPeers(peers, node.right, id, n)
+		m += appendLeftPeers(peers[m:], node.left, id, n - m)
+		return m
+	}
+}
+
 func (tree *bucketTree) buckets(id Id) []*bucket {
 	node := tree.find(id)
 	buckets := make([]*bucket, tree.size)
+	buckets[0] = node.bucket
 	child := node
 	node = node.parent
-	m := 0
+	m := 1
 	for node != nil {
 		if child == node.left {
-			m += appendRightBuckets(buckets, node.right)
+			m += appendRightBuckets(buckets[m:], node.right)
 		} else {
 			m += appendLeftBuckets(buckets[m:], node.left)
 		}
+		child = node
+		node = node.parent
 	}
 	return buckets[:m]
 }
 
 func appendRightBuckets(buckets []*bucket, node *node) int {
-	if node != nil {
-		return 0
+	if node.bucket != nil {
+		buckets[0] = node.bucket
+		return 1
 	} else {
 		m := appendRightBuckets(buckets, node.left)
 		m += appendRightBuckets(buckets[m:], node.right)
@@ -122,7 +126,8 @@ func appendRightBuckets(buckets []*bucket, node *node) int {
 
 func appendLeftBuckets(buckets []*bucket, node *node) int {
 	if node != nil {
-		return 0
+		buckets[0] = node.bucket
+		return 1
 	} else {
 		m := appendLeftBuckets(buckets, node.right)
 		m += appendLeftBuckets(buckets[m:], node.left)

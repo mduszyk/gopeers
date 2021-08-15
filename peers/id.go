@@ -33,6 +33,16 @@ func Sha1Id(data []byte) Id {
 
 func ForeachBit(id Id, f func(bit bool) bool) {
 	words := id.Bits()
+	// zero has special representation
+	if words == nil {
+		for i := 0; i < IdBits; i++ {
+			if !f(false) {
+				return
+			}
+		}
+		return
+	}
+
 	skipBits := len(words) * bits.UintSize - IdBits
 	skipWords := 0
 	if skipBits > 0 {

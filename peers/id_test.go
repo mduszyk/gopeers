@@ -96,6 +96,18 @@ func TestForeachBit(t *testing.T) {
 	if !bits[0] || bits[1] || !bits[2] {
 		t.Errorf("invalid bits iteration\n")
 	}
+	id = big.NewInt(0)
+	n := 0
+	ForeachBit(id, func(bit bool) bool {
+		if bit {
+			t.Errorf("all bits should be false\n")
+		}
+		n++
+		return true
+	})
+	if n != IdBits {
+		t.Errorf("foreach didn't go through all bits\n")
+	}
 }
 
 func TestRandomIdRange(t *testing.T) {

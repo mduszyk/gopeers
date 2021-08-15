@@ -1,6 +1,7 @@
 package peers
 
 import (
+	"math/big"
 	"sort"
 	"testing"
 )
@@ -96,5 +97,31 @@ func TestTreeClosest(t *testing.T) {
 		if !eq(expected[i].Id, peers[i].Id) {
 			t.Errorf("ids don't match\n")
 		}
+	}
+}
+
+func TestTreeBuckets(t *testing.T) {
+	tree := NewBucketTree(20)
+	tree.split(tree.root)
+	tree.split(tree.root.left)
+	tree.split(tree.root.right)
+	if tree.size != 4 {
+		t.Errorf("invlid tree size\n")
+	}
+	buckets := tree.buckets(big.NewInt(0))
+	if len(buckets) != tree.size {
+		t.Errorf("invlid buckets count\n")
+	}
+	if buckets[0] != tree.root.left.left.bucket {
+		t.Errorf("invlid bucket\n")
+	}
+	if buckets[1] != tree.root.left.right.bucket {
+		t.Errorf("invlid bucket\n")
+	}
+	if buckets[2] != tree.root.right.left.bucket {
+		t.Errorf("invlid bucket\n")
+	}
+	if buckets[3] != tree.root.right.right.bucket {
+		t.Errorf("invlid bucket\n")
 	}
 }
