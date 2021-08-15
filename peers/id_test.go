@@ -97,3 +97,15 @@ func TestForeachBit(t *testing.T) {
 		t.Errorf("invalid bits iteration\n")
 	}
 }
+
+func TestRandomIdRange(t *testing.T) {
+	lo := big.NewInt(10)
+	hi := big.NewInt(11)
+	id, err := RandomIdRange(lo, hi)
+	if err != nil {
+		t.Errorf("failed generating id: %v\n", err)
+	}
+	if !eq(id, lo) {
+		t.Errorf("invalid id generated\n")
+	}
+}
