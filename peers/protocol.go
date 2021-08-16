@@ -20,7 +20,7 @@ type udpProtocolServer struct {
 	findNodeService udprpc.RpcService
 }
 
-func NewUdpProtocolServer(addres string, p2pNode *p2pNode) (*udpProtocolServer, error) {
+func NewUdpProtocolServer(address string, p2pNode *p2pNode) (*udpProtocolServer, error) {
 	encoder := udprpc.NewJsonEncoder()
 	decoder := udprpc.NewJsonDecoder()
 	protoServer :=  &udpProtocolServer{
@@ -34,7 +34,7 @@ func NewUdpProtocolServer(addres string, p2pNode *p2pNode) (*udpProtocolServer, 
 		protoServer.PingRpc,
 		protoServer.FindNodeRpc,
 	}
-	rpcNode, err := udprpc.NewRpcNode(addres, services)
+	rpcNode, err := udprpc.NewRpcNode(address, services)
 	if err != nil {
 		return nil, err
 	}
