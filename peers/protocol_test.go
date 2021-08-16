@@ -1,6 +1,7 @@
 package peers
 
 import (
+	"sync"
 	"testing"
 )
 
@@ -90,5 +91,40 @@ func TestMethodCallTrivialJoin(t *testing.T) {
 	}
 	if n := node1.tree.find(node2.peer.Id); !n.bucket.contains(node2.peer.Id) {
 		t.Errorf("id not added to bucket\n")
+	}
+}
+
+func TestMethodCallJoin(t *testing.T) {
+	n := 100
+	nodes := make([]*p2pNode, 100)
+	for i := 0; i < n; i++ {
+		node, err := NewRandomIdP2pNode(20, 5)
+		if err != nil {
+			t.Errorf("failed creating node: %v\n", err)
+		}
+		nodes[i] = node
+	}
+
+	var wg sync.WaitGroup
+	for i := 1; i < n; i++ {
+		wg.Add(1)
+		go func(i int) {
+			err := nodes[i].join(nodes[0].peer)
+			if err != nil {
+				t.Errorf("failed joining: %v\n", err)
+			}
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
+
+	first := nodes[0]
+	for i := 1; i < n; i++ {
+		if treeNode := first.tree.find(nodes[i].peer.Id); !treeNode.bucket.contains(nodes[i].peer.Id) {
+			t.Errorf("id not added to bucket\n")
+		}
+		if treeNode := nodes[i].tree.find(first.peer.Id); !treeNode.bucket.contains(first.peer.Id) {
+			t.Errorf("id not added to bucket\n")
+		}
 	}
 }

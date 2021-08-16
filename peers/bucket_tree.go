@@ -76,7 +76,7 @@ func appendRightPeers(peers []*Peer, node *node, id Id, n int) int {
 		return len(closest)
 	} else {
 		m := appendRightPeers(peers, node.left, id, n)
-		m += appendRightPeers(peers, node.right, id, n - m)
+		m += appendRightPeers(peers[m:], node.right, id, n - m)
 		return m
 	}
 }
