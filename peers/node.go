@@ -29,7 +29,7 @@ func NewRandomIdP2pNode(k, b int) (*p2pNode, error) {
 	return node, nil
 }
 
-func (node *p2pNode) pingPeer(peer *Peer) error {
+func (node *p2pNode) callPing(peer *Peer) error {
 	randomId, err := RandomId()
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (node *p2pNode) add(peer *Peer) bool {
 		} else {
 			j, leastSeenPeer := n.bucket.leastSeen()
 			if j > -1 {
-				err := node.pingPeer(leastSeenPeer)
+				err := node.callPing(leastSeenPeer)
 				if err != nil {
 					n.bucket.remove(j)
 					return node.add(peer)
