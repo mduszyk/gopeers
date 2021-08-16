@@ -2,6 +2,7 @@ package peers
 
 import (
 	"math/big"
+	"sync"
 )
 
 type node struct {
@@ -12,12 +13,13 @@ type node struct {
 type bucketTree struct {
 	k, size int
 	root *node
+	mutex *sync.RWMutex
 }
 
 func NewBucketTree(k int) *bucketTree {
 	b := NewBucket(k, 0, big.NewInt(0), maxId)
 	root := &node{bucket: b}
-	return &bucketTree{k: k, size: 1, root: root}
+	return &bucketTree{k: k, size: 1, root: root, mutex: &sync.RWMutex{}}
 }
 
 func (tree *bucketTree) find(id Id) *node {
