@@ -7,14 +7,13 @@ import (
 
 type bucket struct {
 	k, depth int
-	lo Id
-	hi Id
+	lo, hi Id
 	peers []*Peer
 }
 
 func NewBucket(k, depth int, lo Id, hi Id) *bucket {
 	peers := make([]*Peer, 0, k)
-	return &bucket{k, depth, lo, hi, peers}
+	return &bucket{k:k, depth: depth, lo: lo, hi: hi, peers: peers}
 }
 
 func (b *bucket) inRange(id Id) bool {

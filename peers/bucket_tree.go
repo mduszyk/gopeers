@@ -5,22 +5,19 @@ import (
 )
 
 type node struct {
-	parent *node
-	left *node
-	right *node
+	parent, left, right *node
 	bucket *bucket
 }
 
 type bucketTree struct {
-	k int
-	size int
+	k, size int
 	root *node
 }
 
 func NewBucketTree(k int) *bucketTree {
 	b := NewBucket(k, 0, big.NewInt(0), maxId)
-	root := &node{nil, nil, nil, b}
-	return &bucketTree{k, 1, root}
+	root := &node{bucket: b}
+	return &bucketTree{k: k, size: 1, root: root}
 }
 
 func (tree *bucketTree) find(id Id) *node {
