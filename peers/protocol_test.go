@@ -69,3 +69,26 @@ func TestMethodCallProtocol(t *testing.T) {
 		t.Errorf("id of node 2 not added to bucket in node 1\n")
 	}
 }
+
+func TestMethodCallTrivialJoin(t *testing.T) {
+	node1, err := NewRandomIdP2pNode(20, 5)
+	if err != nil {
+		t.Errorf("failed creating node: %v\n", err)
+	}
+
+	node2, err := NewRandomIdP2pNode(20, 5)
+	if err != nil {
+		t.Errorf("failed creating node: %v\n", err)
+	}
+
+	err = node1.join(node2.peer)
+	if err != nil {
+		t.Errorf("failed joining: %v\n", err)
+	}
+	if n := node2.tree.find(node1.peer.Id); !n.bucket.contains(node1.peer.Id) {
+		t.Errorf("id not added to bucket\n")
+	}
+	if n := node1.tree.find(node2.peer.Id); !n.bucket.contains(node2.peer.Id) {
+		t.Errorf("id not added to bucket\n")
+	}
+}
