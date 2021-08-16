@@ -48,8 +48,8 @@ func (s *udpProtocolServer) Connect(addr *net.UDPAddr, peer *Peer) {
 }
 
 type pingPayload struct {
-	Addr     *net.UDPAddr
-	Id       Id
+	PeerAddr *net.UDPAddr
+	PeerId   Id
 	RandomId Id
 }
 
@@ -59,9 +59,9 @@ func (s *udpProtocolServer) PingRpc(requestPayload udprpc.RpcPayload) (udprpc.Rp
 	if err != nil {
 		return nil, err
 	}
-	sender := &Peer{Id: pingRequest.Id, LastSeen: time.Now()}
-	s.Connect(pingRequest.Addr, sender)
-	pingId, err := s.p2pNode.Ping(sender, pingRequest.RandomId)
+	peer := &Peer{Id: pingRequest.PeerId, LastSeen: time.Now()}
+	s.Connect(pingRequest.PeerAddr, peer)
+	pingId, err := s.p2pNode.Ping(peer, pingRequest.RandomId)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func NewUdpProtocol(addr *net.UDPAddr, server *udpProtocolServer) *udpProtocol {
 	}
 }
 
-func (p *udpProtocol) Ping(sender *Peer, randomId Id) (Id, error) {
+func (p *udpProtocol) Ping(_ *Peer, randomId Id) (Id, error) {
 	pingRequest := pingPayload{
 		p.server.rpcNode.Addr,
 		p.server.p2pNode.peer.Id,
