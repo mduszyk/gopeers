@@ -73,27 +73,42 @@ type findNodeResponse struct {
 }
 
 func (s *udpProtocolServer) PingRpc(requestPayload udprpc.RpcPayload) (udprpc.RpcPayload, error) {
-	var pingRequest pingRequest
-	err := s.decoder.Decode(requestPayload, &pingRequest)
+	var request pingRequest
+	err := s.decoder.Decode(requestPayload, &request)
 	if err != nil {
 		return nil, err
 	}
-	peer := &Peer{Id: pingRequest.PeerId, LastSeen: time.Now()}
-	s.Connect(pingRequest.PeerAddr, peer)
-	pingId, err := s.p2pNode.Ping(peer, pingRequest.RandomId)
+	peer := &Peer{Id: request.PeerId, LastSeen: time.Now()}
+	s.Connect(request.PeerAddr, peer)
+	pingId, err := s.p2pNode.Ping(peer, request.RandomId)
 	if err != nil {
 		return nil, err
 	}
-	pingResult := pingResponse{RandomId: pingId}
-	responsePayload, err := s.encoder.Encode(&pingResult)
+	response := pingResponse{RandomId: pingId}
+	responsePayload, err := s.encoder.Encode(&response)
 	return responsePayload, err
 }
 
 func (s *udpProtocolServer) FindNodeRpc(requestPayload udprpc.RpcPayload) (udprpc.RpcPayload, error) {
-
-	//peers, err := s.p2pNode.FindNode(sender, findNodeRequest.FindId)
-
-	return nil, nil
+	var request findNodeRequest
+	err := s.decoder.Decode(requestPayload, &request)
+	if err != nil {
+		return nil, err
+	}
+	peer := &Peer{Id: request.PeerId, LastSeen: time.Now()}
+	s.Connect(request.PeerAddr, peer)
+	peers, err := s.p2pNode.FindNode(peer, request.NodeId)
+	if err != nil {
+		return nil, err
+	}
+	nodes := make([]udpNode, len(peers))
+	for i := 0; i< len(peers); i++ {
+		proto := (peers[i].Proto).(*udpProtocol)
+		nodes[i] = udpNode{Addr: proto.addr, NodeId: peers[i].Id}
+	}
+	response := findNodeResponse{Nodes: nodes}
+	responsePayload, err := s.encoder.Encode(&response)
+	return responsePayload, err
 }
 
 type udpProtocol struct {
@@ -109,12 +124,12 @@ func NewUdpProtocol(addr *net.UDPAddr, server *udpProtocolServer) *udpProtocol {
 }
 
 func (p *udpProtocol) Ping(_ *Peer, randomId Id) (Id, error) {
-	pingRequest := pingRequest{
+	request := pingRequest{
 		PeerAddr: p.server.rpcNode.Addr,
 		PeerId: p.server.p2pNode.peer.Id,
 		RandomId: randomId,
 	}
-	requestPayload, err := p.server.encoder.Encode(&pingRequest)
+	requestPayload, err := p.server.encoder.Encode(&request)
 	if err != nil {
 		return nil, err
 	}
@@ -122,19 +137,41 @@ func (p *udpProtocol) Ping(_ *Peer, randomId Id) (Id, error) {
 	if err != nil {
 		return nil, err
 	}
-	var pingResponse pingResponse
-	err = p.server.decoder.Decode(responsePayload, &pingResponse)
+	var response pingResponse
+	err = p.server.decoder.Decode(responsePayload, &response)
 	if err != nil {
 		return nil, err
 	}
-	return pingResponse.RandomId, nil
+	return response.RandomId, nil
 }
 
-func (p *udpProtocol) FindNode(sender *Peer, id Id) ([]*Peer, error) {
-
-	//responsePayload, err := p.server.rpcNode.Call(p.addr, p.server.findNodeService, requestPayload)
-
-	return nil, nil
+func (p *udpProtocol) FindNode(_ *Peer, id Id) ([]*Peer, error) {
+	request := findNodeRequest{
+		PeerAddr: p.server.rpcNode.Addr,
+		PeerId: p.server.p2pNode.peer.Id,
+		NodeId: id,
+	}
+	requestPayload, err := p.server.encoder.Encode(&request)
+	if err != nil {
+		return nil, err
+	}
+	responsePayload, err := p.server.rpcNode.Call(p.addr, p.server.findNodeService, requestPayload)
+	if err != nil {
+		return nil, err
+	}
+	var response findNodeResponse
+	err = p.server.decoder.Decode(responsePayload, &response)
+	if err != nil {
+		return nil, err
+	}
+	peers := make([]*Peer, len(response.Nodes))
+	for i := 0; i < len(response.Nodes); i++ {
+		n := response.Nodes[i]
+		peer := &Peer{Id: n.NodeId, LastSeen: time.Now()}
+		p.server.Connect(n.Addr, peer)
+		peers[i] = peer
+	}
+	return peers, nil
 }
 
 
