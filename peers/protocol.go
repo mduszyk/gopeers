@@ -174,7 +174,6 @@ func (p *udpProtocol) FindNode(_ *Peer, id Id) ([]*Peer, error) {
 	return peers, nil
 }
 
-
 func NewUdpProtoNode(k, b int, address string) (*udpProtocolServer, error) {
 	nodeId, err := RandomId()
 	if err != nil {
