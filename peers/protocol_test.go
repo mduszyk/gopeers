@@ -95,36 +95,57 @@ func TestMethodCallTrivialJoin(t *testing.T) {
 }
 
 func TestMethodCallJoin(t *testing.T) {
-	n := 100
-	nodes := make([]*p2pNode, 100)
+	n := 200
+	k := 20
+	b := 5
+	nodes := make([]*p2pNode, n)
 	for i := 0; i < n; i++ {
-		node, err := NewRandomIdP2pNode(20, 5)
+		node, err := NewRandomIdP2pNode(k, b)
 		if err != nil {
 			t.Errorf("failed creating node: %v\n", err)
 		}
 		nodes[i] = node
 	}
 
-	var wg sync.WaitGroup
+	var wg1 sync.WaitGroup
 	for i := 1; i < n; i++ {
-		wg.Add(1)
+		wg1.Add(1)
 		go func(i int) {
 			err := nodes[i].join(nodes[0].peer)
 			if err != nil {
 				t.Errorf("failed joining: %v\n", err)
 			}
-			wg.Done()
+			wg1.Done()
 		}(i)
 	}
-	wg.Wait()
+	wg1.Wait()
 
-	first := nodes[0]
-	for i := 1; i < n; i++ {
-		if treeNode := first.tree.find(nodes[i].peer.Id); !treeNode.bucket.contains(nodes[i].peer.Id) {
-			t.Errorf("id not added to bucket\n")
+	var wg2 sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg2.Add(1)
+		go func(i int) {
+			err := nodes[i].refreshAll()
+			if err != nil {
+				t.Errorf("failed refreshing: %v\n", err)
+			}
+			wg2.Done()
+		}(i)
+	}
+	wg2.Wait()
+
+	for i := 0; i < n; i++ {
+		seen := 0
+		for j := 0; j < n; j++ {
+			if j == i {
+				continue
+			}
+			treeNode := nodes[j].tree.find(nodes[i].peer.Id)
+			if treeNode.bucket.contains(nodes[i].peer.Id) {
+				seen++
+			}
 		}
-		if treeNode := nodes[i].tree.find(first.peer.Id); !treeNode.bucket.contains(first.peer.Id) {
-			t.Errorf("id not added to bucket\n")
+		if seen < k {
+			t.Errorf("node didn't join\n")
 		}
 	}
 }

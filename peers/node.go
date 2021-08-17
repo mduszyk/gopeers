@@ -92,11 +92,9 @@ func (node *p2pNode) join(peer *Peer) error {
 	node.tree.mutex.RUnlock()
 	if len(buckets) > 1 {
 		// skip bucket containing our id
-		for _, b := range buckets[1:] {
-			err = node.refresh(b)
-			if err != nil {
-				return err
-			}
+		err = node.refreshBuckets(buckets[1:])
+		if err != nil {
+			return err
 		}
 	}
 
@@ -120,6 +118,23 @@ func (node *p2pNode) refresh(b *bucket) error {
 	}
 
 	return nil
+}
+
+func (node *p2pNode) refreshBuckets(buckets []*bucket) error {
+	for _, b := range buckets {
+		err := node.refresh(b)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (node *p2pNode) refreshAll() error {
+	node.tree.mutex.RLock()
+	buckets := node.tree.buckets(node.peer.Id)
+	node.tree.mutex.RUnlock()
+	return node.refreshBuckets(buckets)
 }
 
 // Protocol interface
