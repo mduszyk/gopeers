@@ -21,8 +21,8 @@ func TestAddFind(t *testing.T) {
 	}
 	for i := 0; i < k; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
-		n := node.tree.find(id)
-		if !n.bucket.contains(id) {
+		n := node.Tree.Find(id)
+		if !n.Bucket.Contains(id) {
 			t.Errorf("bucket should contain given Id\n")
 		}
 	}
@@ -40,13 +40,13 @@ func TestBucketListSplit(t *testing.T) {
 			t.Errorf("bucket should add peer %d\n", i)
 		}
 	}
-	if node.tree.root.left == nil || node.tree.root.right == nil {
+	if node.Tree.root.left == nil || node.Tree.root.right == nil {
 		t.Errorf("there should be 2 buckets\n")
 	}
 	for i := 0; i < k+1; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
-		n := node.tree.find(id)
-		if !n.bucket.contains(id) {
+		n := node.Tree.Find(id)
+		if !n.Bucket.Contains(id) {
 			t.Errorf("bucket should contain given Id\n")
 		}
 	}

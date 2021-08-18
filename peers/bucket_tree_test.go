@@ -12,22 +12,22 @@ func TestTreeFind(t *testing.T) {
 	tree.split(tree.root.left)
 	tree.split(tree.root.right)
 	peer := &Peer{Id: intBits([]uint{IdBits - 1, IdBits - 2})}
-	n := tree.find(peer.Id)
+	n := tree.Find(peer.Id)
 	if n != tree.root.right.right {
 		t.Errorf("found wrong node for id: %0160b\n", peer.Id)
 	}
 	peer = &Peer{Id: intBits([]uint{IdBits - 1})}
-	n = tree.find(peer.Id)
+	n = tree.Find(peer.Id)
 	if n != tree.root.right.left {
 		t.Errorf("found wrong node for id: %0160b\n", peer.Id)
 	}
 	peer = &Peer{Id: intBits([]uint{IdBits - 2})}
-	n = tree.find(peer.Id)
+	n = tree.Find(peer.Id)
 	if n != tree.root.left.right {
 		t.Errorf("found wrong node for id: %0160b\n", peer.Id)
 	}
 	peer = &Peer{Id: intBits([]uint{0})}
-	n = tree.find(peer.Id)
+	n = tree.Find(peer.Id)
 	if n != tree.root.left.left {
 		t.Errorf("found wrong node for id: %0160b\n", peer.Id)
 	}
@@ -41,7 +41,7 @@ func TestTreeClosest(t *testing.T) {
 	tree.split(tree.root.right.right)
 	allPeers := make([]*Peer, 0, 100)
 	setBits1 := []uint{IdBits - 1, IdBits - 2, IdBits - 3}
-	bucket1 := tree.root.right.right.right.bucket
+	bucket1 := tree.root.right.right.right.Bucket
 	for i := 0; i < 10; i++ {
 		setBits1 = append(setBits1, uint(i))
 		peer := &Peer{Id: intBits(setBits1)}
@@ -51,7 +51,7 @@ func TestTreeClosest(t *testing.T) {
 		}
 	}
 	setBits2 := []uint{IdBits - 1, IdBits - 2}
-	bucket2 := tree.root.right.right.left.bucket
+	bucket2 := tree.root.right.right.left.Bucket
 	for i := 0; i < 5; i++ {
 		setBits2 = append(setBits2, uint(i))
 		peer := &Peer{Id: intBits(setBits2)}
@@ -61,7 +61,7 @@ func TestTreeClosest(t *testing.T) {
 		}
 	}
 	setBits3 := []uint{IdBits - 1}
-	bucket3 := tree.root.right.left.bucket
+	bucket3 := tree.root.right.left.Bucket
 	for i := 0; i < 5; i++ {
 		setBits3 = append(setBits3, uint(i))
 		peer := &Peer{Id: intBits(setBits3)}
@@ -71,7 +71,7 @@ func TestTreeClosest(t *testing.T) {
 		}
 	}
 	setBits4 := []uint{32}
-	bucket4 := tree.root.left.left.bucket
+	bucket4 := tree.root.left.left.Bucket
 	for i := 0; i < 5; i++ {
 		setBits4 = append(setBits4, uint(i))
 		peer := &Peer{Id: intBits(setBits4)}
@@ -112,16 +112,16 @@ func TestTreeBuckets(t *testing.T) {
 	if len(buckets) != tree.size {
 		t.Errorf("invlid buckets count\n")
 	}
-	if buckets[0] != tree.root.left.left.bucket {
+	if buckets[0] != tree.root.left.left.Bucket {
 		t.Errorf("invlid bucket\n")
 	}
-	if buckets[1] != tree.root.left.right.bucket {
+	if buckets[1] != tree.root.left.right.Bucket {
 		t.Errorf("invlid bucket\n")
 	}
-	if buckets[2] != tree.root.right.left.bucket {
+	if buckets[2] != tree.root.right.left.Bucket {
 		t.Errorf("invlid bucket\n")
 	}
-	if buckets[3] != tree.root.right.right.bucket {
+	if buckets[3] != tree.root.right.right.Bucket {
 		t.Errorf("invlid bucket\n")
 	}
 	id := intBits([]uint{IdBits-1})
@@ -129,16 +129,16 @@ func TestTreeBuckets(t *testing.T) {
 	if len(buckets) != tree.size {
 		t.Errorf("invlid buckets count\n")
 	}
-	if buckets[0] != tree.root.right.left.bucket {
+	if buckets[0] != tree.root.right.left.Bucket {
 		t.Errorf("invlid bucket\n")
 	}
-	if buckets[1] != tree.root.right.right.bucket {
+	if buckets[1] != tree.root.right.right.Bucket {
 		t.Errorf("invlid bucket\n")
 	}
-	if buckets[2] != tree.root.left.right.bucket {
+	if buckets[2] != tree.root.left.right.Bucket {
 		t.Errorf("invlid bucket\n")
 	}
-	if buckets[3] != tree.root.left.left.bucket {
+	if buckets[3] != tree.root.left.left.Bucket {
 		t.Errorf("invlid bucket\n")
 	}
 }

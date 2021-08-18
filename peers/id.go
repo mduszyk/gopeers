@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"math/big"
 	"math/bits"
+	mathRand "math/rand"
 )
 
 type Id = *big.Int
@@ -13,11 +14,23 @@ const IdBits = 160
 
 var maxId = new(big.Int).Lsh(big.NewInt(1), IdBits)
 
-func RandomId() (Id, error) {
+func MathRandId() Id {
+	r := mathRand.New(mathRand.NewSource(1))
+	return new(big.Int).Rand(r, maxId)
+}
+
+func MathRandIdRange(lo Id, hi Id) Id {
+	d := new(big.Int).Sub(hi, lo)
+	r := mathRand.New(mathRand.NewSource(1))
+	id := new(big.Int).Rand(r, d)
+	return new(big.Int).Add(lo, id)
+}
+
+func CryptoRandId() (Id, error) {
 	return rand.Int(rand.Reader, maxId)
 }
 
-func RandomIdRange(lo Id, hi Id) (Id, error) {
+func CryptoRandIdRange(lo Id, hi Id) (Id, error) {
 	d := new(big.Int).Sub(hi, lo)
 	id, err := rand.Int(rand.Reader, d)
 	if err != nil {

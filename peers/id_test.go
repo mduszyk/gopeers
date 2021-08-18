@@ -21,11 +21,11 @@ func TestSha1Id(t *testing.T) {
 }
 
 func TestRandomId(t *testing.T) {
-	id1, err := RandomId()
+	id1, err := CryptoRandId()
 	if err != nil {
 		t.Errorf("failed generating random Id, err: %v\n", err)
 	}
-	id2, err := RandomId()
+	id2, err := CryptoRandId()
 	if err != nil {
 		t.Errorf("failed generating random Id, err: %v\n", err)
 	}
@@ -113,7 +113,7 @@ func TestForeachBit(t *testing.T) {
 func TestRandomIdRange(t *testing.T) {
 	lo := big.NewInt(10)
 	hi := big.NewInt(11)
-	id, err := RandomIdRange(lo, hi)
+	id, err := CryptoRandIdRange(lo, hi)
 	if err != nil {
 		t.Errorf("failed generating id: %v\n", err)
 	}

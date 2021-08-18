@@ -9,7 +9,7 @@ type Peer struct {
 }
 
 func NewRandomIdPeer() (*Peer, error){
-	id, err := RandomId()
+	id, err := CryptoRandId()
 	if err != nil {
 		return nil, err
 	}

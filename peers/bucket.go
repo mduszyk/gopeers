@@ -34,7 +34,7 @@ func (b *bucket) find(id Id) int {
 	return -1
 }
 
-func (b *bucket) contains(id Id) bool {
+func (b *bucket) Contains(id Id) bool {
 	return b.find(id) > -1
 }
 

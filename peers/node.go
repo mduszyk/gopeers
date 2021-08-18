@@ -5,20 +5,20 @@ import (
 	"time"
 )
 
-type p2pNode struct {
-	b int
-	peer *Peer
-	tree *bucketTree
+type P2pNode struct {
+	b    int
+	Peer *Peer
+	Tree *bucketTree
 }
 
-func NewP2pNode(k, b int, id Id) *p2pNode {
-	node := &p2pNode{b: b, tree: NewBucketTree(k)}
-	node.peer = &Peer{id, node, time.Now()}
+func NewP2pNode(k, b int, id Id) *P2pNode {
+	node := &P2pNode{b: b, Tree: NewBucketTree(k)}
+	node.Peer = &Peer{id, node, time.Now()}
 	return node
 }
 
-func NewRandomIdP2pNode(k, b int) (*p2pNode, error) {
-	nodeId, err := RandomId()
+func NewRandomIdP2pNode(k, b int) (*P2pNode, error) {
+	nodeId, err := CryptoRandId()
 	if err != nil {
 		return nil, err
 	}
@@ -26,12 +26,12 @@ func NewRandomIdP2pNode(k, b int) (*p2pNode, error) {
 	return node, nil
 }
 
-func (node *p2pNode) callPing(peer *Peer) error {
-	randomId, err := RandomId()
+func (node *P2pNode) callPing(peer *Peer) error {
+	randomId, err := CryptoRandId()
 	if err != nil {
 		return err
 	}
-	echoId, err := peer.Proto.Ping(node.peer, randomId)
+	echoId, err := peer.Proto.Ping(node.Peer, randomId)
 	if err != nil {
 		return err
 	}
@@ -42,44 +42,50 @@ func (node *p2pNode) callPing(peer *Peer) error {
 	return nil
 }
 
-func (node *p2pNode) add(peer *Peer) bool {
+func (node *P2pNode) add(peer *Peer) bool {
 	peer.touch()
-	node.tree.mutex.Lock()
-	n := node.tree.find(peer.Id)
-	if n.bucket.isFull() {
-		if n.bucket.inRange(node.peer.Id) || n.bucket.depth % node.b != 0 {
-			node.tree.split(n)
-			node.tree.mutex.Unlock()
+	node.Tree.mutex.Lock()
+	n := node.Tree.Find(peer.Id)
+	if i := n.Bucket.find(peer.Id); i > -1 {
+		n.Bucket.remove(i)
+		added := n.Bucket.add(peer)
+		node.Tree.mutex.Unlock()
+		return added
+	} else if n.Bucket.isFull() {
+		if n.Bucket.inRange(node.Peer.Id) || n.Bucket.depth % node.b != 0 {
+			node.Tree.split(n)
+			node.Tree.mutex.Unlock()
 			return node.add(peer)
 		} else {
-			j, leastSeenPeer := n.bucket.leastSeen()
-			if j > -1 {
+			if j, leastSeenPeer := n.Bucket.leastSeen(); j > -1 {
+				node.Tree.mutex.Unlock()
 				err := node.callPing(leastSeenPeer)
+				node.Tree.mutex.Lock()
+				if k := n.Bucket.find(leastSeenPeer.Id); k > -1 {
+					n.Bucket.remove(k)
+				}
 				if err != nil {
-					n.bucket.remove(j)
-					node.tree.mutex.Unlock()
+					node.Tree.mutex.Unlock()
 					return node.add(peer)
 				} else {
 					leastSeenPeer.touch()
+					n.Bucket.add(leastSeenPeer)
 				}
 			}
-			node.tree.mutex.Unlock()
+			node.Tree.mutex.Unlock()
 			return false
 		}
 	} else {
-		if j := n.bucket.find(peer.Id); j > -1 {
-			n.bucket.remove(j)
-		}
-		added := n.bucket.add(peer)
-		node.tree.mutex.Unlock()
+		added := n.Bucket.add(peer)
+		node.Tree.mutex.Unlock()
 		return added
 	}
 }
 
-func (node *p2pNode) join(peer *Peer) error {
+func (node *P2pNode) Join(peer *Peer) error {
 	node.add(peer)
 
-	peers, err := peer.Proto.FindNode(node.peer, node.peer.Id)
+	peers, err := peer.Proto.FindNode(node.Peer, node.Peer.Id)
 	if err != nil {
 		return err
 	}
@@ -87,9 +93,9 @@ func (node *p2pNode) join(peer *Peer) error {
 		node.add(p)
 	}
 
-	node.tree.mutex.RLock()
-	buckets := node.tree.buckets(peer.Id)
-	node.tree.mutex.RUnlock()
+	node.Tree.mutex.RLock()
+	buckets := node.Tree.buckets(peer.Id)
+	node.Tree.mutex.RUnlock()
 	if len(buckets) > 1 {
 		// skip bucket containing our id
 		err = node.refreshBuckets(buckets[1:])
@@ -101,14 +107,15 @@ func (node *p2pNode) join(peer *Peer) error {
 	return nil
 }
 
-func (node *p2pNode) refresh(b *bucket) error {
-	id, err := RandomIdRange(b.lo, b.hi)
-	if err != nil {
-		return err
-	}
+func (node *P2pNode) refresh(b *bucket) error {
+	//id, err := CryptoRandIdRange(b.lo, b.hi)
+	//if err != nil {
+	//	return err
+	//}
+	id := MathRandIdRange(b.lo, b.hi)
 
 	for _, peer := range b.peers {
-		peers, err := peer.Proto.FindNode(node.peer, id)
+		peers, err := peer.Proto.FindNode(node.Peer, id)
 		if err != nil {
 			return err
 		}
@@ -120,7 +127,7 @@ func (node *p2pNode) refresh(b *bucket) error {
 	return nil
 }
 
-func (node *p2pNode) refreshBuckets(buckets []*bucket) error {
+func (node *P2pNode) refreshBuckets(buckets []*bucket) error {
 	for _, b := range buckets {
 		err := node.refresh(b)
 		if err != nil {
@@ -130,24 +137,24 @@ func (node *p2pNode) refreshBuckets(buckets []*bucket) error {
 	return nil
 }
 
-func (node *p2pNode) refreshAll() error {
-	node.tree.mutex.RLock()
-	buckets := node.tree.buckets(node.peer.Id)
-	node.tree.mutex.RUnlock()
+func (node *P2pNode) RefreshAll() error {
+	node.Tree.mutex.RLock()
+	buckets := node.Tree.buckets(node.Peer.Id)
+	node.Tree.mutex.RUnlock()
 	return node.refreshBuckets(buckets)
 }
 
 // Protocol interface
 
-func (node *p2pNode) Ping(sender *Peer, randomId Id) (Id, error) {
+func (node *P2pNode) Ping(sender *Peer, randomId Id) (Id, error) {
 	node.add(sender)
 	return randomId, nil
 }
 
-func (node *p2pNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
+func (node *P2pNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
 	node.add(sender)
-	node.tree.mutex.RLock()
-	peers := node.tree.closest(id, node.tree.k)
-	node.tree.mutex.RUnlock()
+	node.Tree.mutex.RLock()
+	peers := node.Tree.closest(id, node.Tree.k)
+	node.Tree.mutex.RUnlock()
 	return peers, nil
 }

@@ -7,7 +7,7 @@ import (
 
 type node struct {
 	parent, left, right *node
-	bucket *bucket
+	Bucket              *bucket
 }
 
 type bucketTree struct {
@@ -18,11 +18,11 @@ type bucketTree struct {
 
 func NewBucketTree(k int) *bucketTree {
 	b := NewBucket(k, 0, big.NewInt(0), maxId)
-	root := &node{bucket: b}
+	root := &node{Bucket: b}
 	return &bucketTree{k: k, size: 1, root: root, mutex: &sync.RWMutex{}}
 }
 
-func (tree *bucketTree) find(id Id) *node {
+func (tree *bucketTree) Find(id Id) *node {
 	n := tree.root
 	ForeachBit(id, func(bit bool) bool {
 		if bit {
@@ -42,17 +42,17 @@ func (tree *bucketTree) find(id Id) *node {
 }
 
 func (tree *bucketTree) split(n *node) {
-	left, right := n.bucket.split()
-	n.bucket = nil
-	n.left = &node{parent: n, bucket: left}
-	n.right = &node{parent: n, bucket: right}
+	left, right := n.Bucket.split()
+	n.Bucket = nil
+	n.left = &node{parent: n, Bucket: left}
+	n.right = &node{parent: n, Bucket: right}
 	tree.size += 1
 }
 
 func (tree *bucketTree) closest(id Id, n int) []*Peer {
-	node := tree.find(id)
+	node := tree.Find(id)
 	peers := make([]*Peer, n)
-	closest := node.bucket.closest(id, n)
+	closest := node.Bucket.closest(id, n)
 	copy(peers, closest)
 	m := len(closest)
 	child := node
@@ -70,8 +70,8 @@ func (tree *bucketTree) closest(id Id, n int) []*Peer {
 }
 
 func appendRightPeers(peers []*Peer, node *node, id Id, n int) int {
-	if node.bucket != nil {
-		closest := node.bucket.closest(id, n)
+	if node.Bucket != nil {
+		closest := node.Bucket.closest(id, n)
 		copy(peers, closest)
 		return len(closest)
 	} else {
@@ -82,8 +82,8 @@ func appendRightPeers(peers []*Peer, node *node, id Id, n int) int {
 }
 
 func appendLeftPeers(peers []*Peer, node *node, id Id, n int) int {
-	if node.bucket != nil {
-		closest := node.bucket.closest(id, n)
+	if node.Bucket != nil {
+		closest := node.Bucket.closest(id, n)
 		copy(peers, closest)
 		return len(closest)
 	} else {
@@ -94,9 +94,9 @@ func appendLeftPeers(peers []*Peer, node *node, id Id, n int) int {
 }
 
 func (tree *bucketTree) buckets(id Id) []*bucket {
-	node := tree.find(id)
+	node := tree.Find(id)
 	buckets := make([]*bucket, tree.size)
-	buckets[0] = node.bucket
+	buckets[0] = node.Bucket
 	child := node
 	node = node.parent
 	m := 1
@@ -113,8 +113,8 @@ func (tree *bucketTree) buckets(id Id) []*bucket {
 }
 
 func appendRightBuckets(buckets []*bucket, node *node) int {
-	if node.bucket != nil {
-		buckets[0] = node.bucket
+	if node.Bucket != nil {
+		buckets[0] = node.Bucket
 		return 1
 	} else {
 		m := appendRightBuckets(buckets, node.left)
@@ -124,8 +124,8 @@ func appendRightBuckets(buckets []*bucket, node *node) int {
 }
 
 func appendLeftBuckets(buckets []*bucket, node *node) int {
-	if node.bucket != nil {
-		buckets[0] = node.bucket
+	if node.Bucket != nil {
+		buckets[0] = node.Bucket
 		return 1
 	} else {
 		m := appendLeftBuckets(buckets, node.right)

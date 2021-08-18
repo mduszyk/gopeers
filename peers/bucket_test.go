@@ -29,7 +29,7 @@ func TestInRange(t *testing.T) {
 	if bucket.inRange(c) {
 		t.Errorf("value %d should not be in range\n", c)
 	}
-	d, err := RandomId()
+	d, err := CryptoRandId()
 	if err != nil {
 		t.Errorf("failed generating random Id: %v\n", err)
 	}
@@ -52,7 +52,7 @@ func TestAdd(t *testing.T) {
 	if !bucket.add(peer) {
 		t.Errorf("bucket should add peer\n")
 	}
-	if !bucket.contains(id) {
+	if !bucket.Contains(id) {
 		t.Errorf("bucket should contain added peer\n")
 	}
 }
@@ -91,13 +91,13 @@ func TestRemove(t *testing.T) {
 		}
 	}
 	id := Sha1Id([]byte("test5"))
-	if !bucket.contains(id) {
+	if !bucket.Contains(id) {
 		t.Errorf("bucket should contain peer\n")
 	}
 	if !bucket.remove(5) {
 		t.Errorf("bucket should remove peer\n")
 	}
-	if bucket.contains(id) {
+	if bucket.Contains(id) {
 		t.Errorf("bucket should not contain peer\n")
 	}
 }
@@ -158,7 +158,7 @@ func TestSplit(t *testing.T) {
 	base = big.NewInt(0)
 	for i := 0; i < k/2; i++ {
 		id := new(big.Int).Add(base, big.NewInt(int64(i)))
-		if !bucket1.contains(id) {
+		if !bucket1.Contains(id) {
 			t.Errorf("bucket should contain Id: %d\n", id)
 		}
 	}
@@ -168,7 +168,7 @@ func TestSplit(t *testing.T) {
 	base = intBits([]uint{159})
 	for i := 10; i < k; i++ {
 		id := new(big.Int).Add(base, big.NewInt(int64(i)))
-		if !bucket2.contains(id) {
+		if !bucket2.Contains(id) {
 			t.Errorf("bucket should contain Id: %d\n", id)
 		}
 	}
