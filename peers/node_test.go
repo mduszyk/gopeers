@@ -163,4 +163,5 @@ func TestNodeJoin(t *testing.T) {
 			t.Errorf("node didn't join\n")
 		}
 	}
+	log.Printf("Done")
 }
