@@ -78,7 +78,7 @@ func TestUdpFindNode(t *testing.T) {
 }
 
 func TestUdpJoin(t *testing.T) {
-	n := 100
+	n := 5
 	k := 20
 	b := 5
 	basePort := 6000
@@ -93,20 +93,16 @@ func TestUdpJoin(t *testing.T) {
 			t.Errorf("failed creating node: %v\n", err)
 		}
 		protoNodes[i] = protoNode
-		peer, err := NewRandomIdPeer()
-		if err != nil {
-			t.Errorf("failed creating peer: %v\n", err)
-		}
-		peers[i] = peer
+		peers[i] = NewPeer(protoNodes[0].p2pNode.Peer.Id)
 	}
 
 	log.Printf("Joining")
 	var wg1 sync.WaitGroup
 	for i := 1; i < n; i++ {
-		protoNodes[i].Connect(protoNodes[0].rpcNode.Addr, peers[0])
+		protoNodes[i].Connect(protoNodes[0].rpcNode.Addr, peers[i])
 		wg1.Add(1)
 		go func(i int) {
-			err := protoNodes[i].p2pNode.Join(peers[0])
+			err := protoNodes[i].p2pNode.Join(peers[i])
 			if err != nil {
 				t.Errorf("failed joining: %v\n", err)
 			}
