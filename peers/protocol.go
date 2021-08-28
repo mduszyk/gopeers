@@ -43,8 +43,8 @@ func NewUdpProtocolServer(address string, p2pNode *P2pNode) (*udpProtocolServer,
 	return protoServer, nil
 }
 
-func (s *udpProtocolServer) Connect(addr *net.UDPAddr, peer *Peer) {
-	peer.Proto = NewUdpProtocol(addr, s)
+func (s *udpProtocolServer) Connect(peerAddr *net.UDPAddr, peer *Peer) {
+	peer.Proto = NewUdpProtocol(peerAddr, s)
 }
 
 type pingRequest struct {

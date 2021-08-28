@@ -3,17 +3,18 @@ package peers
 import (
 	"fmt"
 	"log"
+	"math/big"
 	"sync"
 	"testing"
 )
 
 func TestUdpPing(t *testing.T) {
-	node1ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:5001")
+	node1ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:4001")
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:5002")
+	node2ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:4002")
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -46,11 +47,41 @@ func TestUdpPing(t *testing.T) {
 	}
 }
 
+func TestUdpFindNode(t *testing.T) {
+	node1, err := NewUdpProtoNode(20, 5, "localhost:5001")
+	if err != nil {
+		t.Errorf("failed creating node: %v\n", err)
+	}
+
+	node2, err := NewUdpProtoNode(20, 5, "localhost:5002")
+	if err != nil {
+		t.Errorf("failed creating node: %v\n", err)
+	}
+
+	node1.p2pNode.add(node2.p2pNode.Peer)
+
+	node1Peer := NewPeer(node1.p2pNode.Peer.Id)
+	node2.Connect(node1.rpcNode.Addr, node1Peer)
+
+	id := big.NewInt(0)
+	// node2 calls node1
+	peers, err := node1Peer.Proto.FindNode(node2.p2pNode.Peer, id)
+	if err != nil {
+		t.Errorf("failed finding nodes: %v\n", err)
+	}
+	if len(peers) != 1 {
+		t.Errorf("got incorrect number of nodes\n")
+	}
+	if !eq(peers[0].Id, node2.p2pNode.Peer.Id) {
+		t.Errorf("found incorrect peer\n")
+	}
+}
+
 func TestUdpJoin(t *testing.T) {
 	n := 100
 	k := 20
 	b := 5
-	basePort := 5000
+	basePort := 6000
 	protoNodes := make([]*udpProtocolServer, n)
 	peers := make([]*Peer, n)
 
