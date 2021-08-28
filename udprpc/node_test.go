@@ -5,12 +5,16 @@ import (
 	"errors"
 	"log"
 	"testing"
+	"time"
 )
 
 var echo1Payloads []RpcPayload
 var echo2Payloads []RpcPayload
 var echo3Payloads []RpcPayload
 var failurePayloads []RpcPayload
+
+var callTimeout = time.Second
+var bufferSize = uint32(1024)
 
 func echo1(payload RpcPayload) (RpcPayload, error) {
 	log.Printf("echo1 received payload: %s\n", payload)
@@ -37,12 +41,12 @@ func failure(payload RpcPayload) (RpcPayload, error) {
 }
 
 func TestRpcNode(t *testing.T) {
-	node1, err := NewRpcNode("localhost:", []RpcFunc{echo1, echo2})
+	node1, err := NewRpcNode("localhost:", []RpcFunc{echo1, echo2}, callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating rpc node: %v\n", err)
 	}
 	go node1.Run()
-	node2, err := NewRpcNode("localhost:", []RpcFunc{echo3, failure})
+	node2, err := NewRpcNode("localhost:", []RpcFunc{echo3, failure}, callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating rpc node: %v\n", err)
 	}

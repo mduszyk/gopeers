@@ -8,6 +8,10 @@ type Peer struct {
 	LastSeen time.Time
 }
 
+func NewPeer(id Id) *Peer {
+	return &Peer{Id: id, LastSeen: time.Now()}
+}
+
 func NewRandomIdPeer() (*Peer, error){
 	id, err := CryptoRandId()
 	if err != nil {

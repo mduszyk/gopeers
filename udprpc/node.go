@@ -27,7 +27,12 @@ type RpcNode struct {
 	readBufferSize  uint32
 }
 
-func NewRpcNode(address string, services []RpcFunc) (*RpcNode, error) {
+func NewRpcNode(
+	address string,
+	services []RpcFunc,
+	callTimeout time.Duration,
+	readBufferSize uint32,
+) (*RpcNode, error) {
 	addr, err := net.ResolveUDPAddr("udp", address)
 	if err != nil {
 		return nil, err
@@ -42,8 +47,8 @@ func NewRpcNode(address string, services []RpcFunc) (*RpcNode, error) {
 	}
 	log.Printf("RpcNode addr: %v\n", addr)
 	node := &RpcNode{
-		callTimeout:     500 * time.Millisecond,
-		readBufferSize:  1024,
+		callTimeout:     callTimeout,
+		readBufferSize:  readBufferSize,
 		pendingRequests: make(map[RpcId]*pendingRequest),
 		pendingMutex:    &sync.Mutex{},
 		encoder:         NewJsonEncoder(),
@@ -66,7 +71,7 @@ func (node *RpcNode) Run() {
 		}
 		err = node.decoder.Decode(buf[:n], &message)
 		if err != nil {
-			log.Printf("failed decoding message, error: %s\n", err)
+			log.Printf("failed decoding message: %s, error: %s\n", string(buf[:n]), err)
 			continue
 		}
 		switch message.Type {

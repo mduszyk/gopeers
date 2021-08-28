@@ -1,16 +1,24 @@
 package peers
 
 import (
+	"fmt"
+	"log"
+	"math/big"
+	"sync"
 	"testing"
+	"time"
 )
 
-func TestUdpProtocol(t *testing.T) {
-	node1ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:5001")
+var callTimeout = time.Minute
+var bufferSize = uint32(10240)
+
+func TestUdpPing(t *testing.T) {
+	node1ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:4001", callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:5002")
+	node2ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:4002", callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -41,4 +49,104 @@ func TestUdpProtocol(t *testing.T) {
 	if n := node1ProtoServer.p2pNode.Tree.Find(node2ProtoServer.p2pNode.Peer.Id); n.Bucket == nil {
 		t.Errorf("id of node 2 not added to bucket in node 1\n")
 	}
+}
+
+func TestUdpFindNode(t *testing.T) {
+	node1, err := NewUdpProtoNode(20, 5, "localhost:5001", callTimeout, bufferSize)
+	if err != nil {
+		t.Errorf("failed creating node: %v\n", err)
+	}
+
+	node2, err := NewUdpProtoNode(20, 5, "localhost:5002", callTimeout, bufferSize)
+	if err != nil {
+		t.Errorf("failed creating node: %v\n", err)
+	}
+
+	node1.p2pNode.add(node2.p2pNode.Peer)
+
+	node1Peer := NewPeer(node1.p2pNode.Peer.Id)
+	node2.Connect(node1.rpcNode.Addr, node1Peer)
+
+	id := big.NewInt(0)
+	// node2 calls node1
+	peers, err := node1Peer.Proto.FindNode(node2.p2pNode.Peer, id)
+	if err != nil {
+		t.Errorf("failed finding nodes: %v\n", err)
+	}
+	if len(peers) != 1 {
+		t.Errorf("got incorrect number of nodes\n")
+	}
+	if !eq(peers[0].Id, node2.p2pNode.Peer.Id) {
+		t.Errorf("found incorrect peer\n")
+	}
+}
+
+func TestUdpJoin(t *testing.T) {
+	n := 100
+	k := 20
+	b := 5
+	basePort := 6000
+	protoNodes := make([]*udpProtocolServer, n)
+	peers := make([]*Peer, n)
+
+	log.Printf("Generating nodes, n: %d", n)
+	for i := 0; i < n; i++ {
+		port := basePort + i
+		address := fmt.Sprintf("localhost:%d", port)
+		protoNode, err := NewUdpProtoNode(k, b, address, callTimeout, bufferSize)
+		if err != nil {
+			t.Errorf("failed creating node: %v\n", err)
+		}
+		protoNodes[i] = protoNode
+		peers[i] = NewPeer(protoNodes[0].p2pNode.Peer.Id)
+	}
+
+	log.Printf("Joining")
+	var wg1 sync.WaitGroup
+	for i := 1; i < n; i++ {
+		protoNodes[i].Connect(protoNodes[0].rpcNode.Addr, peers[i])
+		wg1.Add(1)
+		go func(i int) {
+			err := protoNodes[i].p2pNode.Join(peers[i])
+			if err != nil {
+				t.Errorf("failed joining: %v\n", err)
+			}
+			wg1.Done()
+		}(i)
+	}
+	wg1.Wait()
+
+	log.Printf("Refreshing")
+	var wg2 sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg2.Add(1)
+		go func(i int) {
+			err := protoNodes[i].p2pNode.RefreshAll()
+			if err != nil {
+				t.Errorf("failed refreshing: %v\n", err)
+			}
+			wg2.Done()
+		}(i)
+	}
+	wg2.Wait()
+
+	log.Printf("Checking state")
+	for i := 0; i < n; i++ {
+		seen := 0
+		for j := 0; j < n; j++ {
+			if j == i {
+				continue
+			}
+			node := protoNodes[i].p2pNode
+			treeNode := node.Tree.Find(node.Peer.Id)
+			if treeNode.Bucket.Contains(node.Peer.Id) {
+				seen++
+			}
+		}
+		log.Printf("seen: %d\n", seen)
+		if seen < 1 {
+			t.Errorf("node didn't join\n")
+		}
+	}
+	log.Printf("Done")
 }
