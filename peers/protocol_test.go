@@ -6,15 +6,19 @@ import (
 	"math/big"
 	"sync"
 	"testing"
+	"time"
 )
 
+var callTimeout = time.Minute
+var bufferSize = uint32(10240)
+
 func TestUdpPing(t *testing.T) {
-	node1ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:4001")
+	node1ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:4001", callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:4002")
+	node2ProtoServer, err := NewUdpProtoNode(20, 5, "localhost:4002", callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -48,12 +52,12 @@ func TestUdpPing(t *testing.T) {
 }
 
 func TestUdpFindNode(t *testing.T) {
-	node1, err := NewUdpProtoNode(20, 5, "localhost:5001")
+	node1, err := NewUdpProtoNode(20, 5, "localhost:5001", callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2, err := NewUdpProtoNode(20, 5, "localhost:5002")
+	node2, err := NewUdpProtoNode(20, 5, "localhost:5002", callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -78,7 +82,7 @@ func TestUdpFindNode(t *testing.T) {
 }
 
 func TestUdpJoin(t *testing.T) {
-	n := 5
+	n := 100
 	k := 20
 	b := 5
 	basePort := 6000
@@ -88,7 +92,8 @@ func TestUdpJoin(t *testing.T) {
 	log.Printf("Generating nodes, n: %d", n)
 	for i := 0; i < n; i++ {
 		port := basePort + i
-		protoNode, err := NewUdpProtoNode(k, b, fmt.Sprintf("localhost:%d", port))
+		address := fmt.Sprintf("localhost:%d", port)
+		protoNode, err := NewUdpProtoNode(k, b, address, callTimeout, bufferSize)
 		if err != nil {
 			t.Errorf("failed creating node: %v\n", err)
 		}

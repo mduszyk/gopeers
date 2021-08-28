@@ -20,7 +20,12 @@ type udpProtocolServer struct {
 	findNodeService udprpc.RpcService
 }
 
-func NewUdpProtocolServer(address string, p2pNode *P2pNode) (*udpProtocolServer, error) {
+func NewUdpProtocolServer(
+	address string,
+	p2pNode *P2pNode,
+	rpcCallTimeout time.Duration,
+	readBufferSize uint32) (*udpProtocolServer, error) {
+
 	encoder := udprpc.NewJsonEncoder()
 	decoder := udprpc.NewJsonDecoder()
 	protoServer :=  &udpProtocolServer{
@@ -34,7 +39,7 @@ func NewUdpProtocolServer(address string, p2pNode *P2pNode) (*udpProtocolServer,
 		protoServer.PingRpc,
 		protoServer.FindNodeRpc,
 	}
-	rpcNode, err := udprpc.NewRpcNode(address, services)
+	rpcNode, err := udprpc.NewRpcNode(address, services, rpcCallTimeout, readBufferSize)
 	if err != nil {
 		return nil, err
 	}
@@ -174,12 +179,13 @@ func (p *udpProtocol) FindNode(_ *Peer, id Id) ([]*Peer, error) {
 	return peers, nil
 }
 
-func NewUdpProtoNode(k, b int, address string) (*udpProtocolServer, error) {
+func NewUdpProtoNode(k, b int, address string,
+rpcCallTimeout time.Duration, rpcReadBufferSize uint32) (*udpProtocolServer, error) {
 	nodeId, err := CryptoRandId()
 	if err != nil {
 		return nil, err
 	}
 	node := NewP2pNode(k, b, nodeId)
-	protoServer, err := NewUdpProtocolServer(address, node)
+	protoServer, err := NewUdpProtocolServer(address, node, rpcCallTimeout, rpcReadBufferSize)
 	return protoServer, nil
 }
