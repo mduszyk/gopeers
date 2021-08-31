@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type RpcFunc func(payload RpcPayload) (RpcPayload, error)
+type RpcFunc func(addr *net.UDPAddr, payload RpcPayload) (RpcPayload, error)
 
 type pendingRequest struct {
 	request *RpcMessage
@@ -87,7 +87,7 @@ func (node *RpcNode) Run() {
 
 func (node *RpcNode) handleRequest(request RpcMessage, addr *net.UDPAddr) {
 	fn := node.services[request.Service]
-	result, err := fn(request.Payload)
+	result, err := fn(addr, request.Payload)
 	response := &RpcMessage{
 		Type: RpcTypeResponse,
 		Id: request.Id,
@@ -139,9 +139,9 @@ func (node *RpcNode) removePending(id RpcId) {
 
 func (node *RpcNode) Call(addr *net.UDPAddr, service RpcService, payload RpcPayload) (RpcPayload, error) {
 	request := &RpcMessage{
-		Type: RpcTypeRequest,
+		Type:    RpcTypeRequest,
 		Service: service,
-		Id: newId(),
+		Id:      randRpcId(),
 		Payload: payload,
 	}
 	pending := &pendingRequest{request, make(chan RpcMessage, 1)}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"log"
+	"net"
 	"testing"
 	"time"
 )
@@ -16,25 +17,25 @@ var failurePayloads []RpcPayload
 var callTimeout = time.Second
 var bufferSize = uint32(1024)
 
-func echo1(payload RpcPayload) (RpcPayload, error) {
+func echo1(addr *net.UDPAddr, payload RpcPayload) (RpcPayload, error) {
 	log.Printf("echo1 received payload: %s\n", payload)
 	echo1Payloads = append(echo1Payloads, payload)
 	return payload, nil
 }
 
-func echo2(payload RpcPayload) (RpcPayload, error) {
+func echo2(addr *net.UDPAddr, payload RpcPayload) (RpcPayload, error) {
 	log.Printf("echo2 received payload: %s\n", payload)
 	echo2Payloads = append(echo2Payloads, payload)
 	return payload, nil
 }
 
-func echo3(payload RpcPayload) (RpcPayload, error) {
+func echo3(addr *net.UDPAddr, payload RpcPayload) (RpcPayload, error) {
 	log.Printf("echo3 received payload: %s\n", payload)
 	echo3Payloads = append(echo3Payloads, payload)
 	return payload, nil
 }
 
-func failure(payload RpcPayload) (RpcPayload, error) {
+func failure(addr *net.UDPAddr, payload RpcPayload) (RpcPayload, error) {
 	log.Printf("failure received payload: %s\n", payload)
 	failurePayloads = append(failurePayloads, payload)
 	return nil, errors.New("rpc service failure")

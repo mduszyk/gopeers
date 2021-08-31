@@ -19,7 +19,6 @@ type RpcMessage struct {
 const RpcTypeRequest = RpcType(1)
 const RpcTypeResponse = RpcType(2)
 
-func newId() RpcId {
-	// TODO
+func randRpcId() RpcId {
 	return RpcId(rand.Uint64())
 }
