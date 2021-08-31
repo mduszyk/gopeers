@@ -26,7 +26,7 @@ type RpcNode struct {
 	decoder         Decoder
 	callTimeout     time.Duration
 	readBufferSize  uint32
-	lastRpcId       uint32
+	lastRpcId       uint64
 }
 
 func NewRpcNode(
@@ -140,7 +140,7 @@ func (node *RpcNode) removePending(id RpcId) {
 }
 
 func (node *RpcNode) nextRpcId() RpcId {
-	return RpcId(atomic.AddUint32(&node.lastRpcId, 1))
+	return RpcId(atomic.AddUint64(&node.lastRpcId, 1))
 }
 
 func (node *RpcNode) Call(addr *net.UDPAddr, service RpcService, payload RpcPayload) (RpcPayload, error) {

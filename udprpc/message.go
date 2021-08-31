@@ -2,7 +2,7 @@ package udprpc
 
 type RpcType uint8
 type RpcService uint16
-type RpcId uint32
+type RpcId uint64
 type RpcPayload []byte
 type RpcError []byte
 
