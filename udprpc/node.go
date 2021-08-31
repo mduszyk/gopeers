@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -25,6 +26,7 @@ type RpcNode struct {
 	decoder         Decoder
 	callTimeout     time.Duration
 	readBufferSize  uint32
+	lastRpcId       uint32
 }
 
 func NewRpcNode(
@@ -137,11 +139,15 @@ func (node *RpcNode) removePending(id RpcId) {
 	node.pendingMutex.Unlock()
 }
 
+func (node *RpcNode) nextRpcId() RpcId {
+	return RpcId(atomic.AddUint32(&node.lastRpcId, 1))
+}
+
 func (node *RpcNode) Call(addr *net.UDPAddr, service RpcService, payload RpcPayload) (RpcPayload, error) {
 	request := &RpcMessage{
 		Type:    RpcTypeRequest,
 		Service: service,
-		Id:      randRpcId(),
+		Id:      node.nextRpcId(),
 		Payload: payload,
 	}
 	pending := &pendingRequest{request, make(chan RpcMessage, 1)}
