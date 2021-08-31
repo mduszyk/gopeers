@@ -180,6 +180,5 @@ rpcCallTimeout time.Duration, rpcReadBufferSize uint32) (*udpProtocolServer, err
 		return nil, err
 	}
 	node := NewP2pNode(k, b, nodeId)
-	protoServer, err := NewUdpProtocolServer(address, node, rpcCallTimeout, rpcReadBufferSize)
-	return protoServer, nil
+	return NewUdpProtocolServer(address, node, rpcCallTimeout, rpcReadBufferSize)
 }
