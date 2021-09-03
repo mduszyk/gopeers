@@ -44,6 +44,10 @@ func Sha1Id(data []byte) Id {
 	return new(big.Int).SetBytes(hash[:])
 }
 
+func BytesId(bytes []byte) Id {
+	return new(big.Int).SetBytes(bytes)
+}
+
 func ForeachBit(id Id, f func(bit bool) bool) {
 	words := id.Bits()
 	// zero has special representation

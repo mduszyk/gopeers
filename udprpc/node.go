@@ -2,6 +2,7 @@ package udprpc
 
 import (
 	"errors"
+	"github.com/golang/protobuf/proto"
 	"log"
 	"net"
 	"sync"
@@ -22,8 +23,6 @@ type RpcNode struct {
 	conn            *net.UDPConn
 	pendingRequests map[RpcId]*pendingRequest
 	pendingMutex    *sync.Mutex
-	encoder         Encoder
-	decoder         Decoder
 	callTimeout     time.Duration
 	readBufferSize  uint32
 	lastRpcId       uint64
@@ -53,8 +52,6 @@ func NewRpcNode(
 		readBufferSize:  readBufferSize,
 		pendingRequests: make(map[RpcId]*pendingRequest),
 		pendingMutex:    &sync.Mutex{},
-		encoder:         NewJsonEncoder(),
-		decoder:         NewJsonDecoder(),
 		services:        services,
 		Addr:            addr,
 		conn:            conn,
@@ -71,15 +68,15 @@ func (node *RpcNode) Run() {
 			log.Printf("failed reading from udp conn, error: %s\n", err)
 			continue
 		}
-		err = node.decoder.Decode(buf[:n], &message)
+		err = proto.Unmarshal(buf[:n], &message)
 		if err != nil {
 			log.Printf("failed decoding message: %s, error: %s\n", string(buf[:n]), err)
 			continue
 		}
 		switch message.Type {
-		case RpcTypeRequest:
+		case RpcMessage_REQUEST:
 			go node.handleRequest(message, addr)
-		case RpcTypeResponse:
+		case RpcMessage_RESPONSE:
 			go node.handleResponse(message)
 		default:
 			log.Printf("received unsupported message type: %v\n", message)
@@ -91,7 +88,7 @@ func (node *RpcNode) handleRequest(request RpcMessage, addr *net.UDPAddr) {
 	fn := node.services[request.Service]
 	result, err := fn(addr, request.Payload)
 	response := &RpcMessage{
-		Type: RpcTypeResponse,
+		Type: RpcMessage_RESPONSE,
 		Id: request.Id,
 		Payload: result,
 	}
@@ -116,7 +113,7 @@ func (node *RpcNode) handleResponse(response RpcMessage) {
 }
 
 func (node *RpcNode) send(message *RpcMessage, addr *net.UDPAddr) error {
-	buf, err := node.encoder.Encode(message)
+	buf, err := proto.Marshal(message)
 	if err != nil {
 		return err
 	}
@@ -145,7 +142,7 @@ func (node *RpcNode) nextRpcId() RpcId {
 
 func (node *RpcNode) Call(addr *net.UDPAddr, service RpcService, payload RpcPayload) (RpcPayload, error) {
 	request := &RpcMessage{
-		Type:    RpcTypeRequest,
+		Type:    RpcMessage_REQUEST,
 		Service: service,
 		Id:      node.nextRpcId(),
 		Payload: payload,

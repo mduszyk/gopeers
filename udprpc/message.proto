@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package udprpc;
+option go_package = ".;udprpc";
+
+message RpcMessage {
+
+  enum RpcType {
+    REQUEST = 0;
+    RESPONSE = 1;
+  }
+
+  RpcType Type = 1;
+
+  uint32 Service = 2;
+
+  uint64 Id = 3;
+
+  bytes Payload = 4;
+
+  bytes Error = 5;
+
+}

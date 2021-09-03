@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package peers;
+option go_package = ".;peers";
+
+message PingRequest {
+  bytes PeerId = 1;
+  bytes RandomId = 2;
+}
+
+message PingResponse {
+  bytes RandomId = 1;
+}
+
+message FindNodeRequest {
+  bytes PeerId = 1;
+  bytes NodeId = 2;
+}
+
+message UDPAddr {
+  bytes IP = 1;
+  int32 Port = 2;
+  string Zone = 3;
+}
+
+message UdpNode {
+  UDPAddr Addr = 1;
+  bytes NodeId = 2;
+}
+
+message findNodeResponse {
+  repeated UdpNode nodes = 1;
+}
+
