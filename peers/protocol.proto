@@ -28,7 +28,7 @@ message UdpNode {
   bytes NodeId = 2;
 }
 
-message findNodeResponse {
+message FindNodeResponse {
   repeated UdpNode nodes = 1;
 }
 
