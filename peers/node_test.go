@@ -105,7 +105,7 @@ func TestNodeTrivialJoin(t *testing.T) {
 }
 
 func TestNodeJoin(t *testing.T) {
-	n := 500
+	n := 400
 	k := 20
 	b := 5
 	nodes := make([]*P2pNode, n)
