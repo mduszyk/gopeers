@@ -144,6 +144,11 @@ func (node *P2pNode) RefreshAll() error {
 	return node.refreshBuckets(buckets)
 }
 
+func (node * P2pNode) Lookup(id Id) []*Peer {
+	// TODO
+	return nil
+}
+
 // Protocol interface
 
 func (node *P2pNode) Ping(sender *Peer, randomId Id) (Id, error) {
@@ -157,4 +162,14 @@ func (node *P2pNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
 	peers := node.Tree.closest(id, node.Tree.k)
 	node.Tree.mutex.RUnlock()
 	return peers, nil
+}
+
+func (node *P2pNode) FindValue(sender *Peer, id Id) (*FindResult, error) {
+	// TODO
+	return nil, nil
+}
+
+func (node *P2pNode) Store(sender *Peer, id Id, value []byte) error {
+	// TODO
+	return nil
 }

@@ -7,9 +7,16 @@ import (
 	"time"
 )
 
+type FindResult struct {
+	peers []*Peer
+	value []byte
+}
+
 type Protocol interface {
 	Ping(sender *Peer, randomId Id) (Id, error)
 	FindNode(sender *Peer, id Id) ([]*Peer, error)
+	FindValue(sender *Peer, id Id) (*FindResult, error)
+	Store(sender *Peer, id Id, value []byte) error
 }
 
 type udpProtocolServer struct {
@@ -89,6 +96,16 @@ func (s *udpProtocolServer) FindNodeRpc(addr *net.UDPAddr, payload udprpc.RpcPay
 	return proto.Marshal(&response)
 }
 
+func (s *udpProtocolServer) FindValueRpc(addr *net.UDPAddr, payload udprpc.RpcPayload) (udprpc.RpcPayload, error) {
+	// TODO
+	return nil, nil
+}
+
+func (s *udpProtocolServer) StoreRpc(addr *net.UDPAddr, payload udprpc.RpcPayload) (udprpc.RpcPayload, error) {
+	// TODO
+	return nil, nil
+}
+
 type udpProtocol struct {
 	addr *net.UDPAddr
 	server *udpProtocolServer
@@ -153,6 +170,17 @@ func (p *udpProtocol) FindNode(_ *Peer, id Id) ([]*Peer, error) {
 		peers[i] = peer
 	}
 	return peers, nil
+}
+
+
+func (p *udpProtocol) FindValue(sender *Peer, id Id) (*FindResult, error) {
+	// TODO
+	return nil, nil
+}
+
+func (p *udpProtocol) Store(sender *Peer, id Id, value []byte) error {
+	// TODO
+	return nil
 }
 
 func NewUdpProtoNode(k, b int, address string,
