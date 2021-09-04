@@ -10,6 +10,14 @@ import (
 	"time"
 )
 
+type RpcPayload = []byte
+
+type RpcError = []byte
+
+type RpcId = uint64
+
+type RpcService = uint32
+
 type RpcFunc func(addr *net.UDPAddr, payload RpcPayload) (RpcPayload, error)
 
 type pendingRequest struct {
@@ -89,7 +97,7 @@ func (node *RpcNode) handleRequest(request RpcMessage, addr *net.UDPAddr) {
 	result, err := fn(addr, request.Payload)
 	response := &RpcMessage{
 		Type: RpcMessage_RESPONSE,
-		Id: request.Id,
+		RpcId: request.RpcId,
 		Payload: result,
 	}
 	if err != nil {
@@ -104,7 +112,7 @@ func (node *RpcNode) handleRequest(request RpcMessage, addr *net.UDPAddr) {
 
 func (node *RpcNode) handleResponse(response RpcMessage) {
 	node.pendingMutex.Lock()
-	if pending, ok := node.pendingRequests[response.Id]; ok {
+	if pending, ok := node.pendingRequests[response.RpcId]; ok {
 		pending.response <- response
 	} else {
 		log.Printf("received unexpected response: %v\n", response)
@@ -144,25 +152,25 @@ func (node *RpcNode) Call(addr *net.UDPAddr, service RpcService, payload RpcPayl
 	request := &RpcMessage{
 		Type:    RpcMessage_REQUEST,
 		Service: service,
-		Id:      node.nextRpcId(),
+		RpcId:      node.nextRpcId(),
 		Payload: payload,
 	}
 	pending := &pendingRequest{request, make(chan RpcMessage, 1)}
-	node.addPending(request.Id, pending)
+	node.addPending(request.RpcId, pending)
 	err := node.send(request, addr)
 	if err != nil {
 		return nil, err
 	}
 	select {
 	case response := <-pending.response:
-		node.removePending(request.Id)
+		node.removePending(request.RpcId)
 		if response.Error != nil {
 			return nil, errors.New(string(response.Error))
 		} else {
 			return response.Payload, nil
 		}
 	case <-time.After(node.callTimeout):
-		node.removePending(request.Id)
+		node.removePending(request.RpcId)
 		return nil, errors.New("call timeout")
 	}
 }

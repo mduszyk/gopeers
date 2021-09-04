@@ -14,7 +14,7 @@ message RpcMessage {
 
   uint32 Service = 2;
 
-  uint64 Id = 3;
+  uint64 RpcId = 3;
 
   bytes Payload = 4;
 
