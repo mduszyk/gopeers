@@ -24,6 +24,8 @@ type udpProtocolServer struct {
 	p2pNode *P2pNode
 	pingService udprpc.RpcService
 	findNodeService udprpc.RpcService
+	findValueService udprpc.RpcService
+	storeService udprpc.RpcService
 }
 
 func NewUdpProtocolServer(
@@ -36,10 +38,14 @@ func NewUdpProtocolServer(
 		p2pNode: p2pNode,
 		pingService: udprpc.RpcService(0),
 		findNodeService: udprpc.RpcService(1),
+		findValueService: udprpc.RpcService(2),
+		storeService: udprpc.RpcService(3),
 	}
 	services := []udprpc.RpcFunc{
 		protoServer.PingRpc,
 		protoServer.FindNodeRpc,
+		protoServer.FindValueRpc,
+		protoServer.StoreRpc,
 	}
 	rpcNode, err := udprpc.NewRpcNode(address, services, rpcCallTimeout, readBufferSize)
 	if err != nil {
