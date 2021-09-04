@@ -15,8 +15,8 @@ type FindResult struct {
 type Protocol interface {
 	Ping(sender *Peer, randomId Id) (Id, error)
 	FindNode(sender *Peer, id Id) ([]*Peer, error)
-	FindValue(sender *Peer, id Id) (*FindResult, error)
-	Store(sender *Peer, id Id, value []byte) error
+	FindValue(sender *Peer, key Id) (*FindResult, error)
+	Store(sender *Peer, key Id, value []byte) error
 }
 
 type udpProtocolServer struct {
@@ -173,12 +173,12 @@ func (p *udpProtocol) FindNode(_ *Peer, id Id) ([]*Peer, error) {
 }
 
 
-func (p *udpProtocol) FindValue(sender *Peer, id Id) (*FindResult, error) {
+func (p *udpProtocol) FindValue(sender *Peer, key Id) (*FindResult, error) {
 	// TODO
 	return nil, nil
 }
 
-func (p *udpProtocol) Store(sender *Peer, id Id, value []byte) error {
+func (p *udpProtocol) Store(sender *Peer, key Id, value []byte) error {
 	// TODO
 	return nil
 }

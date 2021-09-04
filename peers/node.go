@@ -164,12 +164,12 @@ func (node *P2pNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
 	return peers, nil
 }
 
-func (node *P2pNode) FindValue(sender *Peer, id Id) (*FindResult, error) {
+func (node *P2pNode) FindValue(sender *Peer, key Id) (*FindResult, error) {
 	// TODO
 	return nil, nil
 }
 
-func (node *P2pNode) Store(sender *Peer, id Id, value []byte) error {
+func (node *P2pNode) Store(sender *Peer, key Id, value []byte) error {
 	// TODO
 	return nil
 }
