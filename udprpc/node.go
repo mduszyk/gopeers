@@ -137,7 +137,7 @@ func (node *RpcNode) removePending(id RpcId) {
 }
 
 func (node *RpcNode) nextRpcId() RpcId {
-	return RpcId(atomic.AddUint64(&node.lastRpcId, 1))
+	return atomic.AddUint64(&node.lastRpcId, 1)
 }
 
 func (node *RpcNode) Call(addr *net.UDPAddr, service RpcService, payload RpcPayload) (RpcPayload, error) {
