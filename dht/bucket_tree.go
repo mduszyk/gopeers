@@ -5,24 +5,24 @@ import (
 	"sync"
 )
 
-type node struct {
-	parent, left, right *node
+type treeNode struct {
+	parent, left, right *treeNode
 	Bucket              *bucket
 }
 
 type bucketTree struct {
 	k, size int
-	root *node
+	root *treeNode
 	mutex *sync.RWMutex
 }
 
 func NewBucketTree(k int) *bucketTree {
 	b := NewBucket(k, 0, big.NewInt(0), maxId)
-	root := &node{Bucket: b}
+	root := &treeNode{Bucket: b}
 	return &bucketTree{k: k, size: 1, root: root, mutex: &sync.RWMutex{}}
 }
 
-func (tree *bucketTree) Find(id Id) *node {
+func (tree *bucketTree) Find(id Id) *treeNode {
 	n := tree.root
 	ForeachBit(id, func(bit bool) bool {
 		if bit {
@@ -41,11 +41,11 @@ func (tree *bucketTree) Find(id Id) *node {
 	return n
 }
 
-func (tree *bucketTree) split(n *node) {
+func (tree *bucketTree) split(n *treeNode) {
 	left, right := n.Bucket.split()
 	n.Bucket = nil
-	n.left = &node{parent: n, Bucket: left}
-	n.right = &node{parent: n, Bucket: right}
+	n.left = &treeNode{parent: n, Bucket: left}
+	n.right = &treeNode{parent: n, Bucket: right}
 	tree.size += 1
 }
 
@@ -69,7 +69,7 @@ func (tree *bucketTree) closest(id Id, n int) []*Peer {
 	return peers[:m]
 }
 
-func appendRightPeers(peers []*Peer, node *node, id Id, n int) int {
+func appendRightPeers(peers []*Peer, node *treeNode, id Id, n int) int {
 	if node.Bucket != nil {
 		closest := node.Bucket.closest(id, n)
 		copy(peers, closest)
@@ -81,7 +81,7 @@ func appendRightPeers(peers []*Peer, node *node, id Id, n int) int {
 	}
 }
 
-func appendLeftPeers(peers []*Peer, node *node, id Id, n int) int {
+func appendLeftPeers(peers []*Peer, node *treeNode, id Id, n int) int {
 	if node.Bucket != nil {
 		closest := node.Bucket.closest(id, n)
 		copy(peers, closest)
@@ -112,7 +112,7 @@ func (tree *bucketTree) buckets(id Id) []*bucket {
 	return buckets[:m]
 }
 
-func appendRightBuckets(buckets []*bucket, node *node) int {
+func appendRightBuckets(buckets []*bucket, node *treeNode) int {
 	if node.Bucket != nil {
 		buckets[0] = node.Bucket
 		return 1
@@ -123,7 +123,7 @@ func appendRightBuckets(buckets []*bucket, node *node) int {
 	}
 }
 
-func appendLeftBuckets(buckets []*bucket, node *node) int {
+func appendLeftBuckets(buckets []*bucket, node *treeNode) int {
 	if node.Bucket != nil {
 		buckets[0] = node.Bucket
 		return 1
