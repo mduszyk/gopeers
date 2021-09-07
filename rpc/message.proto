@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package udprpc;
-option go_package = ".;udprpc";
+package rpc;
+option go_package = ".;rpc";
 
-message RpcMessage {
+message Message {
 
   enum RpcType {
     REQUEST = 0;
@@ -12,9 +12,9 @@ message RpcMessage {
 
   RpcType Type = 1;
 
-  uint32 Service = 2;
+  uint32 ServiceId = 2;
 
-  uint64 RpcId = 3;
+  uint64 CallId = 3;
 
   bytes Payload = 4;
 

@@ -2,7 +2,7 @@ package peers
 
 import (
 	"github.com/golang/protobuf/proto"
-	"github.com/mduszyk/gopeers/udprpc"
+	"github.com/mduszyk/gopeers/rpc"
 	"net"
 	"time"
 )
@@ -20,12 +20,12 @@ type Protocol interface {
 }
 
 type udpProtocolServer struct {
-	rpcNode *udprpc.RpcNode
-	p2pNode *P2pNode
-	pingService udprpc.RpcService
-	findNodeService udprpc.RpcService
-	findValueService udprpc.RpcService
-	storeService udprpc.RpcService
+	rpcNode          *rpc.UdpNode
+	p2pNode          *P2pNode
+	pingService      rpc.ServiceId
+	findNodeService  rpc.ServiceId
+	findValueService rpc.ServiceId
+	storeService     rpc.ServiceId
 }
 
 func NewUdpProtocolServer(
@@ -35,19 +35,19 @@ func NewUdpProtocolServer(
 	readBufferSize uint32) (*udpProtocolServer, error) {
 
 	protoServer :=  &udpProtocolServer{
-		p2pNode: p2pNode,
-		pingService: udprpc.RpcService(0),
-		findNodeService: udprpc.RpcService(1),
-		findValueService: udprpc.RpcService(2),
-		storeService: udprpc.RpcService(3),
+		p2pNode:          p2pNode,
+		pingService:      rpc.ServiceId(0),
+		findNodeService:  rpc.ServiceId(1),
+		findValueService: rpc.ServiceId(2),
+		storeService:     rpc.ServiceId(3),
 	}
-	services := []udprpc.RpcFunc{
+	services := []rpc.Service{
 		protoServer.PingRpc,
 		protoServer.FindNodeRpc,
 		protoServer.FindValueRpc,
 		protoServer.StoreRpc,
 	}
-	rpcNode, err := udprpc.NewRpcNode(address, services, rpcCallTimeout, readBufferSize)
+	rpcNode, err := rpc.NewUdpNode(address, services, rpcCallTimeout, readBufferSize)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (s *udpProtocolServer) Connect(peerAddr *net.UDPAddr, peer *Peer) {
 	peer.Proto = NewUdpProtocol(peerAddr, s)
 }
 
-func (s *udpProtocolServer) PingRpc(addr *net.UDPAddr, payload udprpc.RpcPayload) (udprpc.RpcPayload, error) {
+func (s *udpProtocolServer) PingRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
 	var request PingRequest
 	err := proto.Unmarshal(payload, &request)
 	if err != nil {
@@ -76,7 +76,7 @@ func (s *udpProtocolServer) PingRpc(addr *net.UDPAddr, payload udprpc.RpcPayload
 	return proto.Marshal(&response)
 }
 
-func (s *udpProtocolServer) FindNodeRpc(addr *net.UDPAddr, payload udprpc.RpcPayload) (udprpc.RpcPayload, error) {
+func (s *udpProtocolServer) FindNodeRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
 	var request FindNodeRequest
 	err := proto.Unmarshal(payload, &request)
 	if err != nil {
@@ -102,12 +102,12 @@ func (s *udpProtocolServer) FindNodeRpc(addr *net.UDPAddr, payload udprpc.RpcPay
 	return proto.Marshal(&response)
 }
 
-func (s *udpProtocolServer) FindValueRpc(addr *net.UDPAddr, payload udprpc.RpcPayload) (udprpc.RpcPayload, error) {
+func (s *udpProtocolServer) FindValueRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
 	// TODO
 	return nil, nil
 }
 
-func (s *udpProtocolServer) StoreRpc(addr *net.UDPAddr, payload udprpc.RpcPayload) (udprpc.RpcPayload, error) {
+func (s *udpProtocolServer) StoreRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
 	// TODO
 	return nil, nil
 }

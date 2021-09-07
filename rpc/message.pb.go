@@ -4,7 +4,7 @@
 // 	protoc        v3.6.1
 // source: message.proto
 
-package udprpc
+package rpc
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -20,66 +20,66 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type RpcMessage_RpcType int32
+type Message_RpcType int32
 
 const (
-	RpcMessage_REQUEST  RpcMessage_RpcType = 0
-	RpcMessage_RESPONSE RpcMessage_RpcType = 1
+	Message_REQUEST  Message_RpcType = 0
+	Message_RESPONSE Message_RpcType = 1
 )
 
-// Enum value maps for RpcMessage_RpcType.
+// Enum value maps for Message_RpcType.
 var (
-	RpcMessage_RpcType_name = map[int32]string{
+	Message_RpcType_name = map[int32]string{
 		0: "REQUEST",
 		1: "RESPONSE",
 	}
-	RpcMessage_RpcType_value = map[string]int32{
+	Message_RpcType_value = map[string]int32{
 		"REQUEST":  0,
 		"RESPONSE": 1,
 	}
 )
 
-func (x RpcMessage_RpcType) Enum() *RpcMessage_RpcType {
-	p := new(RpcMessage_RpcType)
+func (x Message_RpcType) Enum() *Message_RpcType {
+	p := new(Message_RpcType)
 	*p = x
 	return p
 }
 
-func (x RpcMessage_RpcType) String() string {
+func (x Message_RpcType) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (RpcMessage_RpcType) Descriptor() protoreflect.EnumDescriptor {
+func (Message_RpcType) Descriptor() protoreflect.EnumDescriptor {
 	return file_message_proto_enumTypes[0].Descriptor()
 }
 
-func (RpcMessage_RpcType) Type() protoreflect.EnumType {
+func (Message_RpcType) Type() protoreflect.EnumType {
 	return &file_message_proto_enumTypes[0]
 }
 
-func (x RpcMessage_RpcType) Number() protoreflect.EnumNumber {
+func (x Message_RpcType) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use RpcMessage_RpcType.Descriptor instead.
-func (RpcMessage_RpcType) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use Message_RpcType.Descriptor instead.
+func (Message_RpcType) EnumDescriptor() ([]byte, []int) {
 	return file_message_proto_rawDescGZIP(), []int{0, 0}
 }
 
-type RpcMessage struct {
+type Message struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Type    RpcMessage_RpcType `protobuf:"varint,1,opt,name=Type,proto3,enum=udprpc.RpcMessage_RpcType" json:"Type,omitempty"`
-	Service uint32             `protobuf:"varint,2,opt,name=Service,proto3" json:"Service,omitempty"`
-	RpcId   uint64             `protobuf:"varint,3,opt,name=RpcId,proto3" json:"RpcId,omitempty"`
-	Payload []byte             `protobuf:"bytes,4,opt,name=Payload,proto3" json:"Payload,omitempty"`
-	Error   []byte             `protobuf:"bytes,5,opt,name=Error,proto3" json:"Error,omitempty"`
+	Type      Message_RpcType `protobuf:"varint,1,opt,name=Type,proto3,enum=rpc.Message_RpcType" json:"Type,omitempty"`
+	ServiceId uint32          `protobuf:"varint,2,opt,name=ServiceId,proto3" json:"ServiceId,omitempty"`
+	CallId    uint64          `protobuf:"varint,3,opt,name=CallId,proto3" json:"CallId,omitempty"`
+	Payload   []byte          `protobuf:"bytes,4,opt,name=Payload,proto3" json:"Payload,omitempty"`
+	Error     []byte          `protobuf:"bytes,5,opt,name=Error,proto3" json:"Error,omitempty"`
 }
 
-func (x *RpcMessage) Reset() {
-	*x = RpcMessage{}
+func (x *Message) Reset() {
+	*x = Message{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_message_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -87,13 +87,13 @@ func (x *RpcMessage) Reset() {
 	}
 }
 
-func (x *RpcMessage) String() string {
+func (x *Message) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RpcMessage) ProtoMessage() {}
+func (*Message) ProtoMessage() {}
 
-func (x *RpcMessage) ProtoReflect() protoreflect.Message {
+func (x *Message) ProtoReflect() protoreflect.Message {
 	mi := &file_message_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -105,40 +105,40 @@ func (x *RpcMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RpcMessage.ProtoReflect.Descriptor instead.
-func (*RpcMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use Message.ProtoReflect.Descriptor instead.
+func (*Message) Descriptor() ([]byte, []int) {
 	return file_message_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *RpcMessage) GetType() RpcMessage_RpcType {
+func (x *Message) GetType() Message_RpcType {
 	if x != nil {
 		return x.Type
 	}
-	return RpcMessage_REQUEST
+	return Message_REQUEST
 }
 
-func (x *RpcMessage) GetService() uint32 {
+func (x *Message) GetServiceId() uint32 {
 	if x != nil {
-		return x.Service
+		return x.ServiceId
 	}
 	return 0
 }
 
-func (x *RpcMessage) GetRpcId() uint64 {
+func (x *Message) GetCallId() uint64 {
 	if x != nil {
-		return x.RpcId
+		return x.CallId
 	}
 	return 0
 }
 
-func (x *RpcMessage) GetPayload() []byte {
+func (x *Message) GetPayload() []byte {
 	if x != nil {
 		return x.Payload
 	}
 	return nil
 }
 
-func (x *RpcMessage) GetError() []byte {
+func (x *Message) GetError() []byte {
 	if x != nil {
 		return x.Error
 	}
@@ -149,20 +149,20 @@ var File_message_proto protoreflect.FileDescriptor
 
 var file_message_proto_rawDesc = []byte{
 	0x0a, 0x0d, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
-	0x06, 0x75, 0x64, 0x70, 0x72, 0x70, 0x63, 0x22, 0xc2, 0x01, 0x0a, 0x0a, 0x52, 0x70, 0x63, 0x4d,
-	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x2e, 0x0a, 0x04, 0x54, 0x79, 0x70, 0x65, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x75, 0x64, 0x70, 0x72, 0x70, 0x63, 0x2e, 0x52, 0x70,
-	0x63, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x2e, 0x52, 0x70, 0x63, 0x54, 0x79, 0x70, 0x65,
-	0x52, 0x04, 0x54, 0x79, 0x70, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
-	0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x07, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
-	0x12, 0x14, 0x0a, 0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52,
-	0x05, 0x52, 0x70, 0x63, 0x49, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61,
-	0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64,
-	0x12, 0x14, 0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c, 0x52,
-	0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x22, 0x24, 0x0a, 0x07, 0x52, 0x70, 0x63, 0x54, 0x79, 0x70,
-	0x65, 0x12, 0x0b, 0x0a, 0x07, 0x52, 0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x10, 0x00, 0x12, 0x0c,
-	0x0a, 0x08, 0x52, 0x45, 0x53, 0x50, 0x4f, 0x4e, 0x53, 0x45, 0x10, 0x01, 0x42, 0x0a, 0x5a, 0x08,
-	0x2e, 0x3b, 0x75, 0x64, 0x70, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x03, 0x72, 0x70, 0x63, 0x22, 0xbf, 0x01, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+	0x12, 0x28, 0x0a, 0x04, 0x54, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x14,
+	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x2e, 0x52, 0x70, 0x63,
+	0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x53, 0x65,
+	0x72, 0x76, 0x69, 0x63, 0x65, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x09, 0x53,
+	0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x43, 0x61, 0x6c, 0x6c,
+	0x49, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x43, 0x61, 0x6c, 0x6c, 0x49, 0x64,
+	0x12, 0x18, 0x0a, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x0c, 0x52, 0x07, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x45, 0x72,
+	0x72, 0x6f, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72,
+	0x22, 0x24, 0x0a, 0x07, 0x52, 0x70, 0x63, 0x54, 0x79, 0x70, 0x65, 0x12, 0x0b, 0x0a, 0x07, 0x52,
+	0x45, 0x51, 0x55, 0x45, 0x53, 0x54, 0x10, 0x00, 0x12, 0x0c, 0x0a, 0x08, 0x52, 0x45, 0x53, 0x50,
+	0x4f, 0x4e, 0x53, 0x45, 0x10, 0x01, 0x42, 0x07, 0x5a, 0x05, 0x2e, 0x3b, 0x72, 0x70, 0x63, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -180,11 +180,11 @@ func file_message_proto_rawDescGZIP() []byte {
 var file_message_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_message_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_message_proto_goTypes = []interface{}{
-	(RpcMessage_RpcType)(0), // 0: udprpc.RpcMessage.RpcType
-	(*RpcMessage)(nil),      // 1: udprpc.RpcMessage
+	(Message_RpcType)(0), // 0: rpc.Message.RpcType
+	(*Message)(nil),      // 1: rpc.Message
 }
 var file_message_proto_depIdxs = []int32{
-	0, // 0: udprpc.RpcMessage.Type:type_name -> udprpc.RpcMessage.RpcType
+	0, // 0: rpc.Message.Type:type_name -> rpc.Message.RpcType
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -199,7 +199,7 @@ func file_message_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_message_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RpcMessage); i {
+			switch v := v.(*Message); i {
 			case 0:
 				return &v.state
 			case 1:
