@@ -22,7 +22,7 @@ type Service func(addr *net.UDPAddr, payload Payload) (Payload, error)
 
 type pendingCall struct {
 	request *Message
-	response chan Message
+	response chan *Message
 }
 
 type UdpNode struct {
@@ -87,7 +87,7 @@ func (node *UdpNode) Run() {
 		case Message_RESPONSE:
 			go node.handleResponse(message)
 		default:
-			log.Printf("received unsupported message type: %v\n", message)
+			log.Printf("received unsupported message type: %v\n", &message)
 		}
 	}
 }
@@ -106,7 +106,7 @@ func (node *UdpNode) handleRequest(request Message, addr *net.UDPAddr) {
 	}
 	err = node.send(response, addr)
 	if err != nil {
-		log.Printf("failed sending response, request: %v, error: %s", request, err)
+		log.Printf("failed sending response, request: %v, error: %s", &request, err)
 	}
 }
 
@@ -115,9 +115,9 @@ func (node *UdpNode) handleResponse(response Message) {
 	pending, ok := node.pendingRequests[response.CallId]
 	node.pendingMutex.RUnlock()
 	if ok {
-		pending.response <- response
+		pending.response <- &response
 	} else {
-		log.Printf("received unexpected response: %v\n", response)
+		log.Printf("received unexpected response: %v\n", &response)
 	}
 }
 
@@ -156,7 +156,7 @@ func (node *UdpNode) Call(addr *net.UDPAddr, serviceId ServiceId, payload Payloa
 		CallId:    node.nextCallId(),
 		Payload:   payload,
 	}
-	pending := &pendingCall{request, make(chan Message, 1)}
+	pending := &pendingCall{request, make(chan *Message, 1)}
 	node.addPending(request.CallId, pending)
 	err := node.send(request, addr)
 	if err != nil {
