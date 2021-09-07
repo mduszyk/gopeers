@@ -93,8 +93,8 @@ func (node *UdpNode) Run() {
 }
 
 func (node *UdpNode) handleRequest(request Message, addr *net.UDPAddr) {
-	fn := node.services[request.ServiceId]
-	result, err := fn(addr, request.Payload)
+	service := node.services[request.ServiceId]
+	result, err := service(addr, request.Payload)
 	response := &Message{
 		Type: Message_RESPONSE,
 		CallId: request.CallId,
