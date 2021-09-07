@@ -29,7 +29,7 @@ type udpProtocolNode struct {
 }
 
 func NewUdpProtocolNode(rpcNode *rpc.UdpNode, dhtNode *KadNode) (*udpProtocolNode, error) {
-	protocolNode :=  &udpProtocolNode{
+	protocolNode := &udpProtocolNode{
 		rpcNode:            rpcNode,
 		dhtNode:            dhtNode,
 		pingServiceId:      rpc.ServiceId(0),
