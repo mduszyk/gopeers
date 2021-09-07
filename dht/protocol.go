@@ -40,7 +40,7 @@ func NewUdpProtocolNode(
 	}
 	dhtNode := NewKadNode(k, b, nodeId)
 
-	protoNode :=  &udpProtocolNode{
+	protocolNode :=  &udpProtocolNode{
 		dhtNode:            dhtNode,
 		pingServiceId:      rpc.ServiceId(0),
 		findNodeServiceId:  rpc.ServiceId(1),
@@ -48,18 +48,18 @@ func NewUdpProtocolNode(
 		storeServiceId:     rpc.ServiceId(3),
 	}
 	services := []rpc.Service{
-		protoNode.PingRpc,
-		protoNode.FindNodeRpc,
-		protoNode.FindValueRpc,
-		protoNode.StoreRpc,
+		protocolNode.PingRpc,
+		protocolNode.FindNodeRpc,
+		protocolNode.FindValueRpc,
+		protocolNode.StoreRpc,
 	}
 	rpcNode, err := rpc.NewUdpNode(address, services, rpcCallTimeout, readBufferSize)
 	if err != nil {
 		return nil, err
 	}
-	protoNode.rpcNode = rpcNode
+	protocolNode.rpcNode = rpcNode
 	go rpcNode.Run()
-	return protoNode, nil
+	return protocolNode, nil
 }
 
 func (n *udpProtocolNode) Connect(peerAddr *net.UDPAddr, peer *Peer) {
