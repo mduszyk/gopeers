@@ -30,7 +30,7 @@ type UdpNode struct {
 	services        []Service
 	conn            *net.UDPConn
 	pendingRequests map[CallId]*pendingCall
-	pendingMutex    *sync.Mutex
+	pendingMutex    *sync.RWMutex
 	callTimeout     time.Duration
 	readBufferSize  uint32
 	lastCallId      uint64
@@ -59,7 +59,7 @@ func NewUdpNode(
 		callTimeout:     callTimeout,
 		readBufferSize:  readBufferSize,
 		pendingRequests: make(map[CallId]*pendingCall),
-		pendingMutex:    &sync.Mutex{},
+		pendingMutex:    &sync.RWMutex{},
 		services:        services,
 		Addr:            addr,
 		conn:            conn,
@@ -111,13 +111,14 @@ func (node *UdpNode) handleRequest(request Message, addr *net.UDPAddr) {
 }
 
 func (node *UdpNode) handleResponse(response Message) {
-	node.pendingMutex.Lock()
-	if pending, ok := node.pendingRequests[response.CallId]; ok {
+	node.pendingMutex.RLock()
+	pending, ok := node.pendingRequests[response.CallId]
+	node.pendingMutex.RUnlock()
+	if ok {
 		pending.response <- response
 	} else {
 		log.Printf("received unexpected response: %v\n", response)
 	}
-	node.pendingMutex.Unlock()
 }
 
 func (node *UdpNode) send(message *Message, addr *net.UDPAddr) error {
