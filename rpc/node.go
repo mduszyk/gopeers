@@ -27,7 +27,7 @@ type pendingCall struct {
 
 type UdpNode struct {
 	Addr            *net.UDPAddr
-	services        []Service
+	Services        []Service
 	conn            *net.UDPConn
 	pendingRequests map[CallId]*pendingCall
 	pendingMutex    *sync.RWMutex
@@ -60,7 +60,7 @@ func NewUdpNode(
 		readBufferSize:  readBufferSize,
 		pendingRequests: make(map[CallId]*pendingCall),
 		pendingMutex:    &sync.RWMutex{},
-		services:        services,
+		Services:        services,
 		Addr:            addr,
 		conn:            conn,
 	}
@@ -93,7 +93,7 @@ func (node *UdpNode) Run() {
 }
 
 func (node *UdpNode) handleRequest(request Message, addr *net.UDPAddr) {
-	service := node.services[request.ServiceId]
+	service := node.Services[request.ServiceId]
 	result, err := service(addr, request.Payload)
 	response := &Message{
 		Type: Message_RESPONSE,

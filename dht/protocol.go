@@ -28,11 +28,30 @@ type udpProtocolNode struct {
 	storeServiceId     rpc.ServiceId
 }
 
-func NewUdpProtocolNode(
+func NewUdpProtocolNode(rpcNode *rpc.UdpNode, dhtNode *KadNode) (*udpProtocolNode, error) {
+	protocolNode :=  &udpProtocolNode{
+		rpcNode:            rpcNode,
+		dhtNode:            dhtNode,
+		pingServiceId:      rpc.ServiceId(0),
+		findNodeServiceId:  rpc.ServiceId(1),
+		findValueServiceId: rpc.ServiceId(2),
+		storeServiceId:     rpc.ServiceId(3),
+	}
+	rpcNode.Services = []rpc.Service{
+		protocolNode.PingRpc,
+		protocolNode.FindNodeRpc,
+		protocolNode.FindValueRpc,
+		protocolNode.StoreRpc,
+	}
+	return protocolNode, nil
+}
+
+func StartUdpProtocolNode(
 	k, b int,
 	address string,
 	rpcCallTimeout time.Duration,
-	readBufferSize uint32) (*udpProtocolNode, error) {
+	readBufferSize uint32,
+	) (*udpProtocolNode, error) {
 
 	nodeId, err := CryptoRandId()
 	if err != nil {
@@ -40,26 +59,17 @@ func NewUdpProtocolNode(
 	}
 	dhtNode := NewKadNode(k, b, nodeId)
 
-	protocolNode :=  &udpProtocolNode{
-		dhtNode:            dhtNode,
-		pingServiceId:      rpc.ServiceId(0),
-		findNodeServiceId:  rpc.ServiceId(1),
-		findValueServiceId: rpc.ServiceId(2),
-		storeServiceId:     rpc.ServiceId(3),
-	}
-	services := []rpc.Service{
-		protocolNode.PingRpc,
-		protocolNode.FindNodeRpc,
-		protocolNode.FindValueRpc,
-		protocolNode.StoreRpc,
-	}
-	rpcNode, err := rpc.NewUdpNode(address, services, rpcCallTimeout, readBufferSize)
+	rpcNode, err := rpc.NewUdpNode(address, nil, rpcCallTimeout, readBufferSize)
 	if err != nil {
 		return nil, err
 	}
-	protocolNode.rpcNode = rpcNode
+
+	// rpc services are registered here
+	protocolNode, err := NewUdpProtocolNode(rpcNode, dhtNode)
+
 	go rpcNode.Run()
-	return protocolNode, nil
+
+	return protocolNode, err
 }
 
 func (n *udpProtocolNode) Connect(peerAddr *net.UDPAddr, peer *Peer) {
