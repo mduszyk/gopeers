@@ -33,7 +33,7 @@ type UdpNode struct {
 	pendingMutex    *sync.Mutex
 	callTimeout     time.Duration
 	readBufferSize  uint32
-	lastRpcId       uint64
+	lastCallId      uint64
 }
 
 func NewUdpNode(
@@ -144,15 +144,15 @@ func (node *UdpNode) removePending(id CallId) {
 	node.pendingMutex.Unlock()
 }
 
-func (node *UdpNode) nextRpcId() CallId {
-	return atomic.AddUint64(&node.lastRpcId, 1)
+func (node *UdpNode) nextCallId() CallId {
+	return atomic.AddUint64(&node.lastCallId, 1)
 }
 
 func (node *UdpNode) Call(addr *net.UDPAddr, serviceId ServiceId, payload Payload) (Payload, error) {
 	request := &Message{
 		Type:      Message_REQUEST,
 		ServiceId: serviceId,
-		CallId:    node.nextRpcId(),
+		CallId:    node.nextCallId(),
 		Payload:   payload,
 	}
 	pending := &pendingCall{request, make(chan Message, 1)}
