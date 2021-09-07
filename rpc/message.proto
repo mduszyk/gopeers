@@ -5,12 +5,12 @@ option go_package = ".;rpc";
 
 message Message {
 
-  enum MessageType {
+  enum TypeEnum {
     REQUEST = 0;
     RESPONSE = 1;
   }
 
-  MessageType Type = 1;
+  TypeEnum Type = 1;
 
   uint32 ServiceId = 2;
 
