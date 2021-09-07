@@ -28,7 +28,7 @@ type udpProtocolNode struct {
 	storeServiceId     rpc.ServiceId
 }
 
-func NewUdpProtocolNode(rpcNode *rpc.UdpNode, dhtNode *KadNode) (*udpProtocolNode, error) {
+func NewUdpProtocolNode(rpcNode *rpc.UdpNode, dhtNode *KadNode) *udpProtocolNode {
 	protocolNode := &udpProtocolNode{
 		rpcNode:            rpcNode,
 		dhtNode:            dhtNode,
@@ -43,7 +43,7 @@ func NewUdpProtocolNode(rpcNode *rpc.UdpNode, dhtNode *KadNode) (*udpProtocolNod
 		protocolNode.FindValueRpc,
 		protocolNode.StoreRpc,
 	}
-	return protocolNode, nil
+	return protocolNode
 }
 
 func StartUdpProtocolNode(
@@ -65,11 +65,11 @@ func StartUdpProtocolNode(
 	}
 
 	// rpc services are registered here
-	protocolNode, err := NewUdpProtocolNode(rpcNode, dhtNode)
+	protocolNode := NewUdpProtocolNode(rpcNode, dhtNode)
 
 	go rpcNode.Run()
 
-	return protocolNode, err
+	return protocolNode, nil
 }
 
 func (n *udpProtocolNode) Connect(peerAddr *net.UDPAddr, peer *Peer) {
