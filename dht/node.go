@@ -1,32 +1,32 @@
-package peers
+package dht
 
 import (
 	"errors"
 	"time"
 )
 
-type P2pNode struct {
+type KadNode struct {
 	b    int
 	Peer *Peer
 	Tree *bucketTree
 }
 
-func NewP2pNode(k, b int, id Id) *P2pNode {
-	node := &P2pNode{b: b, Tree: NewBucketTree(k)}
+func NewKadNode(k, b int, id Id) *KadNode {
+	node := &KadNode{b: b, Tree: NewBucketTree(k)}
 	node.Peer = &Peer{id, node, time.Now()}
 	return node
 }
 
-func NewRandomIdP2pNode(k, b int) (*P2pNode, error) {
+func NewRandomIdP2pNode(k, b int) (*KadNode, error) {
 	nodeId, err := CryptoRandId()
 	if err != nil {
 		return nil, err
 	}
-	node := NewP2pNode(k, b, nodeId)
+	node := NewKadNode(k, b, nodeId)
 	return node, nil
 }
 
-func (node *P2pNode) callPing(peer *Peer) error {
+func (node *KadNode) callPing(peer *Peer) error {
 	randomId, err := CryptoRandId()
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func (node *P2pNode) callPing(peer *Peer) error {
 	return nil
 }
 
-func (node *P2pNode) add(peer *Peer) bool {
+func (node *KadNode) add(peer *Peer) bool {
 	peer.touch()
 	node.Tree.mutex.Lock()
 	n := node.Tree.Find(peer.Id)
@@ -82,7 +82,7 @@ func (node *P2pNode) add(peer *Peer) bool {
 	}
 }
 
-func (node *P2pNode) Join(peer *Peer) error {
+func (node *KadNode) Join(peer *Peer) error {
 	node.add(peer)
 
 	peers, err := peer.Proto.FindNode(node.Peer, node.Peer.Id)
@@ -107,7 +107,7 @@ func (node *P2pNode) Join(peer *Peer) error {
 	return nil
 }
 
-func (node *P2pNode) refresh(b *bucket) error {
+func (node *KadNode) refresh(b *bucket) error {
 	//id, err := CryptoRandIdRange(b.lo, b.hi)
 	//if err != nil {
 	//	return err
@@ -127,7 +127,7 @@ func (node *P2pNode) refresh(b *bucket) error {
 	return nil
 }
 
-func (node *P2pNode) refreshBuckets(buckets []*bucket) error {
+func (node *KadNode) refreshBuckets(buckets []*bucket) error {
 	for _, b := range buckets {
 		err := node.refresh(b)
 		if err != nil {
@@ -137,26 +137,26 @@ func (node *P2pNode) refreshBuckets(buckets []*bucket) error {
 	return nil
 }
 
-func (node *P2pNode) RefreshAll() error {
+func (node *KadNode) RefreshAll() error {
 	node.Tree.mutex.RLock()
 	buckets := node.Tree.buckets(node.Peer.Id)
 	node.Tree.mutex.RUnlock()
 	return node.refreshBuckets(buckets)
 }
 
-func (node * P2pNode) Lookup(id Id) []*Peer {
+func (node *KadNode) Lookup(id Id) []*Peer {
 	// TODO
 	return nil
 }
 
 // Protocol interface
 
-func (node *P2pNode) Ping(sender *Peer, randomId Id) (Id, error) {
+func (node *KadNode) Ping(sender *Peer, randomId Id) (Id, error) {
 	node.add(sender)
 	return randomId, nil
 }
 
-func (node *P2pNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
+func (node *KadNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
 	node.add(sender)
 	node.Tree.mutex.RLock()
 	peers := node.Tree.closest(id, node.Tree.k)
@@ -164,12 +164,12 @@ func (node *P2pNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
 	return peers, nil
 }
 
-func (node *P2pNode) FindValue(sender *Peer, key Id) (*FindResult, error) {
+func (node *KadNode) FindValue(sender *Peer, key Id) (*FindResult, error) {
 	// TODO
 	return nil, nil
 }
 
-func (node *P2pNode) Store(sender *Peer, key Id, value []byte) error {
+func (node *KadNode) Store(sender *Peer, key Id, value []byte) error {
 	// TODO
 	return nil
 }

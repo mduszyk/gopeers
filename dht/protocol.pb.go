@@ -4,7 +4,7 @@
 // 	protoc        v3.6.1
 // source: protocol.proto
 
-package peers
+package dht
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -387,16 +387,16 @@ func file_protocol_proto_rawDescGZIP() []byte {
 
 var file_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_protocol_proto_goTypes = []interface{}{
-	(*PingRequest)(nil),      // 0: peers.PingRequest
-	(*PingResponse)(nil),     // 1: peers.PingResponse
-	(*FindNodeRequest)(nil),  // 2: peers.FindNodeRequest
-	(*UDPAddr)(nil),          // 3: peers.UDPAddr
-	(*UdpNode)(nil),          // 4: peers.UdpNode
-	(*FindNodeResponse)(nil), // 5: peers.FindNodeResponse
+	(*PingRequest)(nil),      // 0: dht.PingRequest
+	(*PingResponse)(nil),     // 1: dht.PingResponse
+	(*FindNodeRequest)(nil),  // 2: dht.FindNodeRequest
+	(*UDPAddr)(nil),          // 3: dht.UDPAddr
+	(*UdpNode)(nil),          // 4: dht.UdpNode
+	(*FindNodeResponse)(nil), // 5: dht.FindNodeResponse
 }
 var file_protocol_proto_depIdxs = []int32{
-	3, // 0: peers.UdpNode.Addr:type_name -> peers.UDPAddr
-	4, // 1: peers.FindNodeResponse.nodes:type_name -> peers.UdpNode
+	3, // 0: dht.UdpNode.Addr:type_name -> dht.UDPAddr
+	4, // 1: dht.FindNodeResponse.nodes:type_name -> dht.UdpNode
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name

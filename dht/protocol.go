@@ -1,4 +1,4 @@
-package peers
+package dht
 
 import (
 	"github.com/golang/protobuf/proto"
@@ -19,56 +19,62 @@ type Protocol interface {
 	Store(sender *Peer, key Id, value []byte) error
 }
 
-type udpProtocolServer struct {
-	rpcNode          *rpc.UdpNode
-	p2pNode          *P2pNode
-	pingService      rpc.ServiceId
-	findNodeService  rpc.ServiceId
-	findValueService rpc.ServiceId
-	storeService     rpc.ServiceId
+type udpProtocolNode struct {
+	rpcNode            *rpc.UdpNode
+	dhtNode            *KadNode
+	pingServiceId      rpc.ServiceId
+	findNodeServiceId  rpc.ServiceId
+	findValueServiceId rpc.ServiceId
+	storeServiceId     rpc.ServiceId
 }
 
-func NewUdpProtocolServer(
+func NewUdpProtocolNode(
+	k, b int,
 	address string,
-	p2pNode *P2pNode,
 	rpcCallTimeout time.Duration,
-	readBufferSize uint32) (*udpProtocolServer, error) {
+	readBufferSize uint32) (*udpProtocolNode, error) {
 
-	protoServer :=  &udpProtocolServer{
-		p2pNode:          p2pNode,
-		pingService:      rpc.ServiceId(0),
-		findNodeService:  rpc.ServiceId(1),
-		findValueService: rpc.ServiceId(2),
-		storeService:     rpc.ServiceId(3),
+	nodeId, err := CryptoRandId()
+	if err != nil {
+		return nil, err
+	}
+	dhtNode := NewKadNode(k, b, nodeId)
+
+	protoNode :=  &udpProtocolNode{
+		dhtNode:            dhtNode,
+		pingServiceId:      rpc.ServiceId(0),
+		findNodeServiceId:  rpc.ServiceId(1),
+		findValueServiceId: rpc.ServiceId(2),
+		storeServiceId:     rpc.ServiceId(3),
 	}
 	services := []rpc.Service{
-		protoServer.PingRpc,
-		protoServer.FindNodeRpc,
-		protoServer.FindValueRpc,
-		protoServer.StoreRpc,
+		protoNode.PingRpc,
+		protoNode.FindNodeRpc,
+		protoNode.FindValueRpc,
+		protoNode.StoreRpc,
 	}
 	rpcNode, err := rpc.NewUdpNode(address, services, rpcCallTimeout, readBufferSize)
 	if err != nil {
 		return nil, err
 	}
-	protoServer.rpcNode = rpcNode
+	protoNode.rpcNode = rpcNode
 	go rpcNode.Run()
-	return protoServer, nil
+	return protoNode, nil
 }
 
-func (s *udpProtocolServer) Connect(peerAddr *net.UDPAddr, peer *Peer) {
-	peer.Proto = NewUdpProtocol(peerAddr, s)
+func (n *udpProtocolNode) Connect(peerAddr *net.UDPAddr, peer *Peer) {
+	peer.Proto = NewUdpProtocol(peerAddr, n)
 }
 
-func (s *udpProtocolServer) PingRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
+func (n *udpProtocolNode) PingRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
 	var request PingRequest
 	err := proto.Unmarshal(payload, &request)
 	if err != nil {
 		return nil, err
 	}
 	peer := &Peer{Id: BytesId(request.PeerId), LastSeen: time.Now()}
-	s.Connect(addr, peer)
-	pingId, err := s.p2pNode.Ping(peer, BytesId(request.RandomId))
+	n.Connect(addr, peer)
+	pingId, err := n.dhtNode.Ping(peer, BytesId(request.RandomId))
 	if err != nil {
 		return nil, err
 	}
@@ -76,15 +82,15 @@ func (s *udpProtocolServer) PingRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc
 	return proto.Marshal(&response)
 }
 
-func (s *udpProtocolServer) FindNodeRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
+func (n *udpProtocolNode) FindNodeRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
 	var request FindNodeRequest
 	err := proto.Unmarshal(payload, &request)
 	if err != nil {
 		return nil, err
 	}
 	peer := &Peer{Id: BytesId(request.PeerId), LastSeen: time.Now()}
-	s.Connect(addr, peer)
-	peers, err := s.p2pNode.FindNode(peer, BytesId(request.NodeId))
+	n.Connect(addr, peer)
+	peers, err := n.dhtNode.FindNode(peer, BytesId(request.NodeId))
 	if err != nil {
 		return nil, err
 	}
@@ -102,38 +108,38 @@ func (s *udpProtocolServer) FindNodeRpc(addr *net.UDPAddr, payload rpc.Payload) 
 	return proto.Marshal(&response)
 }
 
-func (s *udpProtocolServer) FindValueRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
+func (n *udpProtocolNode) FindValueRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
 	// TODO
 	return nil, nil
 }
 
-func (s *udpProtocolServer) StoreRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
+func (n *udpProtocolNode) StoreRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
 	// TODO
 	return nil, nil
 }
 
 type udpProtocol struct {
-	addr *net.UDPAddr
-	server *udpProtocolServer
+	addr         *net.UDPAddr
+	protocolNode *udpProtocolNode
 }
 
-func NewUdpProtocol(addr *net.UDPAddr, server *udpProtocolServer) *udpProtocol {
+func NewUdpProtocol(addr *net.UDPAddr, server *udpProtocolNode) *udpProtocol {
 	return &udpProtocol{
-		addr: addr,
-		server: server,
+		addr:         addr,
+		protocolNode: server,
 	}
 }
 
 func (p *udpProtocol) Ping(_ *Peer, randomId Id) (Id, error) {
 	request := PingRequest{
-		PeerId: p.server.p2pNode.Peer.Id.Bytes(),
+		PeerId: p.protocolNode.dhtNode.Peer.Id.Bytes(),
 		RandomId: randomId.Bytes(),
 	}
 	requestPayload, err := proto.Marshal(&request)
 	if err != nil {
 		return nil, err
 	}
-	responsePayload, err := p.server.rpcNode.Call(p.addr, p.server.pingService, requestPayload)
+	responsePayload, err := p.protocolNode.rpcNode.Call(p.addr, p.protocolNode.pingServiceId, requestPayload)
 	if err != nil {
 		return nil, err
 	}
@@ -147,14 +153,14 @@ func (p *udpProtocol) Ping(_ *Peer, randomId Id) (Id, error) {
 
 func (p *udpProtocol) FindNode(_ *Peer, id Id) ([]*Peer, error) {
 	request := FindNodeRequest{
-		PeerId: p.server.p2pNode.Peer.Id.Bytes(),
+		PeerId: p.protocolNode.dhtNode.Peer.Id.Bytes(),
 		NodeId: id.Bytes(),
 	}
 	requestPayload, err := proto.Marshal(&request)
 	if err != nil {
 		return nil, err
 	}
-	responsePayload, err := p.server.rpcNode.Call(p.addr, p.server.findNodeService, requestPayload)
+	responsePayload, err := p.protocolNode.rpcNode.Call(p.addr, p.protocolNode.findNodeServiceId, requestPayload)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +178,7 @@ func (p *udpProtocol) FindNode(_ *Peer, id Id) ([]*Peer, error) {
 			Port: int(n.Addr.Port),
 			Zone: n.Addr.Zone,
 		}
-		p.server.Connect(addr, peer)
+		p.protocolNode.Connect(addr, peer)
 		peers[i] = peer
 	}
 	return peers, nil
@@ -187,14 +193,4 @@ func (p *udpProtocol) FindValue(sender *Peer, key Id) (*FindResult, error) {
 func (p *udpProtocol) Store(sender *Peer, key Id, value []byte) error {
 	// TODO
 	return nil
-}
-
-func NewUdpProtoNode(k, b int, address string,
-rpcCallTimeout time.Duration, rpcReadBufferSize uint32) (*udpProtocolServer, error) {
-	nodeId, err := CryptoRandId()
-	if err != nil {
-		return nil, err
-	}
-	node := NewP2pNode(k, b, nodeId)
-	return NewUdpProtocolServer(address, node, rpcCallTimeout, rpcReadBufferSize)
 }

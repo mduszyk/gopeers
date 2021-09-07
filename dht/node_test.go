@@ -1,4 +1,4 @@
-package peers
+package dht
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ func TestAddFind(t *testing.T) {
 	nodeId := big.NewInt(0)
 	k := 20
 	b := 5
-	node := NewP2pNode(k, b, nodeId)
+	node := NewKadNode(k, b, nodeId)
 	for i := 0; i < k; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
@@ -34,7 +34,7 @@ func TestBucketListSplit(t *testing.T) {
 	nodeId := big.NewInt(0)
 	k := 20
 	b := 5
-	node := NewP2pNode(k, b, nodeId)
+	node := NewKadNode(k, b, nodeId)
 	for i := 0; i < k+1; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
@@ -108,7 +108,7 @@ func TestNodeJoin(t *testing.T) {
 	n := 400
 	k := 20
 	b := 5
-	nodes := make([]*P2pNode, n)
+	nodes := make([]*KadNode, n)
 
 	log.Printf("Generating nodes, n: %d", n)
 	for i := 0; i < n; i++ {

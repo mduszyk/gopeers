@@ -1,4 +1,4 @@
-package peers
+package dht
 
 func min(a, b int) int {
     if a < b {

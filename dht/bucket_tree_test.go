@@ -1,4 +1,4 @@
-package peers
+package dht
 
 import (
 	"math/big"
@@ -85,7 +85,7 @@ func TestTreeClosest(t *testing.T) {
 	n := 18
 	peers := tree.closest(peer.Id, n)
 	if len(peers) != n {
-		t.Errorf("returned wrong number of close peers: %d\n", len(peers))
+		t.Errorf("returned wrong number of close dht: %d\n", len(peers))
 	}
 	sort.Slice(allPeers, func(i, j int) bool {
 		di := xor(peer.Id, allPeers[i].Id)
