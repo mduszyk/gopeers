@@ -108,10 +108,6 @@ func (node *KadNode) Join(peer *Peer) error {
 }
 
 func (node *KadNode) refresh(b *bucket) error {
-	//id, err := CryptoRandIdRange(b.lo, b.hi)
-	//if err != nil {
-	//	return err
-	//}
 	id := MathRandIdRange(b.lo, b.hi)
 
 	for _, peer := range b.peers {
