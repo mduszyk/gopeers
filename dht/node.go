@@ -17,7 +17,7 @@ func NewKadNode(k, b int, id Id) *KadNode {
 	return node
 }
 
-func NewRandomIdP2pNode(k, b int) (*KadNode, error) {
+func NewRandomIdKadNode(k, b int) (*KadNode, error) {
 	nodeId, err := CryptoRandId()
 	if err != nil {
 		return nil, err
