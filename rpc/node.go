@@ -167,9 +167,8 @@ func (node *UdpNode) Call(addr *net.UDPAddr, serviceId ServiceId, payload Payloa
 		node.removePending(request.CallId)
 		if response.Error != nil {
 			return nil, errors.New(string(response.Error))
-		} else {
-			return response.Payload, nil
 		}
+		return response.Payload, nil
 	case <-time.After(node.callTimeout):
 		node.removePending(request.CallId)
 		return nil, errors.New("call timeout")
