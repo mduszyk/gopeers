@@ -82,7 +82,7 @@ func (n *udpProtocolNode) PingRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.P
 	if err != nil {
 		return nil, err
 	}
-	peer := &Peer{Id: BytesId(request.PeerId), LastSeen: time.Now()}
+	peer := NewPeer(BytesId(request.PeerId))
 	n.Connect(addr, peer)
 	pingId, err := n.dhtNode.Ping(peer, BytesId(request.RandomId))
 	if err != nil {
@@ -98,7 +98,7 @@ func (n *udpProtocolNode) FindNodeRpc(addr *net.UDPAddr, payload rpc.Payload) (r
 	if err != nil {
 		return nil, err
 	}
-	peer := &Peer{Id: BytesId(request.PeerId), LastSeen: time.Now()}
+	peer := NewPeer(BytesId(request.PeerId))
 	n.Connect(addr, peer)
 	peers, err := n.dhtNode.FindNode(peer, BytesId(request.NodeId))
 	if err != nil {
