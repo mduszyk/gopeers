@@ -2,27 +2,29 @@ package dht
 
 import (
 	"errors"
+	"log"
+	"sort"
 	"time"
 )
 
 type KadNode struct {
-	b    int
+	k, b, alpha    int
 	Peer *Peer
 	Tree *bucketTree
 }
 
-func NewKadNode(k, b int, id Id) *KadNode {
-	node := &KadNode{b: b, Tree: NewBucketTree(k)}
+func NewKadNode(k, b, alpha int, id Id) *KadNode {
+	node := &KadNode{k: k, b: b, alpha: alpha, Tree: NewBucketTree(k)}
 	node.Peer = &Peer{id, node, time.Now()}
 	return node
 }
 
-func NewRandomIdKadNode(k, b int) (*KadNode, error) {
+func NewRandomIdKadNode(k, b, alpha int) (*KadNode, error) {
 	nodeId, err := CryptoRandId()
 	if err != nil {
 		return nil, err
 	}
-	node := NewKadNode(k, b, nodeId)
+	node := NewKadNode(k, b, alpha, nodeId)
 	return node, nil
 }
 
@@ -141,8 +143,63 @@ func (node *KadNode) RefreshAll() error {
 }
 
 func (node *KadNode) Lookup(id Id) []*Peer {
-	// TODO
-	return nil
+	peers := node.Tree.closest(id, node.k)
+	seen := make(map[string]bool)
+
+	for _, peer := range peers {
+		key := string(peer.Id.Bytes())
+		seen[key] = true
+	}
+
+	type result struct {
+		peer *Peer
+		found []*Peer
+	}
+
+	queried := make([]*Peer, 0, node.k)
+	failed := make([]*Peer, 0, node.k)
+	success := make(chan result, node.alpha)
+	failure := make(chan *Peer, node.alpha)
+
+	for len(peers) > 0 && len(queried) < node.k {
+		n := min(node.alpha, len(peers))
+		for _, peer := range peers[:n] {
+			go func(peer *Peer) {
+				found, err := peer.Proto.FindNode(node.Peer, id)
+				if err != nil {
+					log.Printf("FindNode failed: %v\n", err)
+					failure <- peer
+				} else {
+					success <- result{peer, found}
+				}
+			}(peer)
+		}
+		peers = peers[n:]
+		for i := 0; i < n; i++ {
+			select {
+			case r := <-success:
+				queried = append(queried, r.peer)
+				for _, peer := range r.found {
+					key := string(peer.Id.Bytes())
+					if _, ok := seen[key]; !ok {
+						peers = append(peers, peer)
+						seen[key] = true
+					}
+				}
+			case p := <-failure:
+				failed = append(failed, p)
+			}
+		}
+
+		// sort peers by distance to id
+		sort.Slice(peers, func(i, j int) bool {
+			di := xor(id, peers[i].Id)
+			dj := xor(id, peers[j].Id)
+			return lt(di, dj)
+		})
+	}
+
+	return peers[:min(node.k, len(peers))]
 }
 
 // Protocol interface

@@ -47,7 +47,7 @@ func NewUdpProtocolNode(rpcNode *rpc.UdpNode, dhtNode *KadNode) *udpProtocolNode
 }
 
 func StartUdpProtocolNode(
-	k, b int,
+	k, b, alpha int,
 	address string,
 	rpcCallTimeout time.Duration,
 	readBufferSize uint32,
@@ -57,7 +57,7 @@ func StartUdpProtocolNode(
 	if err != nil {
 		return nil, err
 	}
-	dhtNode := NewKadNode(k, b, nodeId)
+	dhtNode := NewKadNode(k, b, alpha, nodeId)
 
 	rpcNode, err := rpc.NewUdpNode(address, nil, rpcCallTimeout, readBufferSize)
 	if err != nil {
