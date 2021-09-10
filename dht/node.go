@@ -230,9 +230,5 @@ func (node *KadNode) FindValue(sender *Peer, key Id) (*FindResult, error) {
 }
 
 func (node *KadNode) Store(sender *Peer, key Id, value []byte) error {
-	err := node.Storage.Set(key.Bytes(), value)
-	if err != nil {
-		return err
-	}
-	return nil
+	return node.Storage.Set(key.Bytes(), value)
 }
