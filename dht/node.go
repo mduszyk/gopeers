@@ -218,10 +218,9 @@ func (node *KadNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
 func (node *KadNode) FindValue(sender *Peer, key Id) (*FindResult, error) {
 	value, err := node.Storage.Get(key.Bytes())
 	if err != nil {
-		peers, err := node.FindNode(sender, key)
-		if err != nil {
-			return nil, err
-		}
+		node.Tree.mutex.RLock()
+		peers := node.Tree.closest(key, node.Tree.k)
+		node.Tree.mutex.RUnlock()
 		result := &FindResult{value: nil, peers: peers}
 		return result, nil
 	}
