@@ -2,6 +2,7 @@ package dht
 
 import (
 	"fmt"
+	"github.com/mduszyk/gopeers/store"
 	"log"
 	"math/big"
 	"sync"
@@ -14,7 +15,8 @@ func TestAddFind(t *testing.T) {
 	k := 20
 	b := 5
 	alpha := 3
-	node := NewKadNode(k, b, alpha, nodeId)
+	storage := store.NewMemStorage()
+	node := NewKadNode(k, b, alpha, nodeId, storage)
 	for i := 0; i < k; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
@@ -36,7 +38,8 @@ func TestBucketListSplit(t *testing.T) {
 	k := 20
 	b := 5
 	alpha := 3
-	node := NewKadNode(k, b, alpha, nodeId)
+	storage := store.NewMemStorage()
+	node := NewKadNode(k, b, alpha, nodeId, storage)
 	for i := 0; i < k+1; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
@@ -57,12 +60,13 @@ func TestBucketListSplit(t *testing.T) {
 }
 
 func TestNodePing(t *testing.T) {
-	p2pNode1, err := NewRandomIdKadNode(20, 5, 3)
+	storage := store.NewMemStorage()
+	p2pNode1, err := NewRandomIdKadNode(20, 5, 3, storage)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	p2pNode2, err := NewRandomIdKadNode(20, 5, 3)
+	p2pNode2, err := NewRandomIdKadNode(20, 5, 3, storage)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -84,12 +88,13 @@ func TestNodePing(t *testing.T) {
 }
 
 func TestNodeTrivialJoin(t *testing.T) {
-	node1, err := NewRandomIdKadNode(20, 5, 3)
+	storage := store.NewMemStorage()
+	node1, err := NewRandomIdKadNode(20, 5, 3, storage)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2, err := NewRandomIdKadNode(20, 5, 3)
+	node2, err := NewRandomIdKadNode(20, 5, 3, storage)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -115,7 +120,8 @@ func TestNodeJoin(t *testing.T) {
 
 	log.Printf("Generating nodes, n: %d", n)
 	for i := 0; i < n; i++ {
-		node, err := NewRandomIdKadNode(k, b, alpha)
+		storage := store.NewMemStorage()
+		node, err := NewRandomIdKadNode(k, b, alpha, storage)
 		if err != nil {
 			t.Errorf("failed creating node: %v\n", err)
 		}

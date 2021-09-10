@@ -3,6 +3,7 @@ package dht
 import (
 	"github.com/golang/protobuf/proto"
 	"github.com/mduszyk/gopeers/rpc"
+	"github.com/mduszyk/gopeers/store"
 	"net"
 	"time"
 )
@@ -57,7 +58,9 @@ func StartUdpProtocolNode(
 	if err != nil {
 		return nil, err
 	}
-	dhtNode := NewKadNode(k, b, alpha, nodeId)
+
+	storage := store.NewMemStorage()
+	dhtNode := NewKadNode(k, b, alpha, nodeId, storage)
 
 	rpcNode, err := rpc.NewUdpNode(address, nil, rpcCallTimeout, readBufferSize)
 	if err != nil {

@@ -2,6 +2,7 @@ package dht
 
 import (
 	"errors"
+	"github.com/mduszyk/gopeers/store"
 	"log"
 	"time"
 )
@@ -10,20 +11,21 @@ type KadNode struct {
 	k, b, alpha    int
 	Peer *Peer
 	Tree *bucketTree
+	Storage store.Storage
 }
 
-func NewKadNode(k, b, alpha int, id Id) *KadNode {
-	node := &KadNode{k: k, b: b, alpha: alpha, Tree: NewBucketTree(k)}
+func NewKadNode(k, b, alpha int, id Id, storage store.Storage) *KadNode {
+	node := &KadNode{k: k, b: b, alpha: alpha, Tree: NewBucketTree(k), Storage: storage}
 	node.Peer = &Peer{id, node, time.Now()}
 	return node
 }
 
-func NewRandomIdKadNode(k, b, alpha int) (*KadNode, error) {
+func NewRandomIdKadNode(k, b, alpha int, storage store.Storage) (*KadNode, error) {
 	nodeId, err := CryptoRandId()
 	if err != nil {
 		return nil, err
 	}
-	node := NewKadNode(k, b, alpha, nodeId)
+	node := NewKadNode(k, b, alpha, nodeId, storage)
 	return node, nil
 }
 
@@ -214,11 +216,23 @@ func (node *KadNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
 }
 
 func (node *KadNode) FindValue(sender *Peer, key Id) (*FindResult, error) {
-	// TODO
-	return nil, nil
+	value, err := node.Storage.Get(key.Bytes())
+	if err != nil {
+		peers, err := node.FindNode(sender, key)
+		if err != nil {
+			return nil, err
+		}
+		result := &FindResult{value: nil, peers: peers}
+		return result, nil
+	}
+	result := &FindResult{value: value, peers: nil}
+	return result, nil
 }
 
 func (node *KadNode) Store(sender *Peer, key Id, value []byte) error {
-	// TODO
+	err := node.Storage.Set(key.Bytes(), value)
+	if err != nil {
+		return err
+	}
 	return nil
 }
