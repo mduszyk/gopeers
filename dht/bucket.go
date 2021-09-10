@@ -2,7 +2,6 @@ package dht
 
 import (
 	"math/big"
-	"sort"
 )
 
 type bucket struct {
@@ -78,10 +77,6 @@ func (b *bucket) leastSeen() (int, *Peer) {
 func (b *bucket) closest(id Id, n int) []*Peer {
 	peers := make([]*Peer, len(b.peers))
 	copy(peers, b.peers)
-	sort.Slice(peers, func(i, j int) bool {
-		di := xor(id, peers[i].Id)
-		dj := xor(id, peers[j].Id)
-		return lt(di, dj)
-	})
+	sortByDistance(peers, id)
 	return peers[:min(n, len(peers))]
 }

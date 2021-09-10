@@ -1,6 +1,9 @@
 package dht
 
-import "time"
+import (
+	"sort"
+	"time"
+)
 
 type Peer struct {
 	Id       Id
@@ -23,4 +26,12 @@ func NewRandomIdPeer() (*Peer, error){
 
 func (p *Peer) touch() {
 	p.LastSeen = time.Now()
+}
+
+func sortByDistance(peers []*Peer, id Id) {
+	sort.Slice(peers, func(i, j int) bool {
+		di := xor(id, peers[i].Id)
+		dj := xor(id, peers[j].Id)
+		return lt(di, dj)
+	})
 }

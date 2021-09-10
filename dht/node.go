@@ -3,7 +3,6 @@ package dht
 import (
 	"errors"
 	"log"
-	"sort"
 	"time"
 )
 
@@ -190,14 +189,11 @@ func (node *KadNode) Lookup(id Id) []*Peer {
 				failed = append(failed, p)
 			}
 		}
-
-		// sort peers by distance to id
-		sort.Slice(peers, func(i, j int) bool {
-			di := xor(id, peers[i].Id)
-			dj := xor(id, peers[j].Id)
-			return lt(di, dj)
-		})
+		sortByDistance(peers, id)
 	}
+
+	peers = append(peers, queried...)
+	sortByDistance(peers, id)
 
 	return peers[:min(node.k, len(peers))]
 }
