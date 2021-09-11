@@ -174,3 +174,67 @@ func TestNodeJoin(t *testing.T) {
 	}
 	log.Printf("Done")
 }
+
+func TestLookup(t *testing.T) {
+	n := 400
+	k := 20
+	b := 5
+	alpha := 3
+	nodes := make([]*KadNode, n)
+	nodePeers := make([]*Peer, 0, n)
+
+	log.Printf("Generating nodes, n: %d", n)
+	for i := 0; i < n; i++ {
+		storage := store.NewMemStorage()
+		node, err := NewRandomIdKadNode(k, b, alpha, storage)
+		nodePeers = append(nodePeers, node.Peer)
+		if err != nil {
+			t.Errorf("failed creating node: %v\n", err)
+		}
+		nodes[i] = node
+	}
+
+	log.Printf("Joining")
+	var wg1 sync.WaitGroup
+	for i := 1; i < n; i++ {
+		wg1.Add(1)
+		go func(i int) {
+			err := nodes[i].Join(nodes[0].Peer)
+			if err != nil {
+				t.Errorf("failed joining: %v\n", err)
+			}
+			wg1.Done()
+		}(i)
+	}
+	wg1.Wait()
+
+	log.Printf("Refreshing")
+	var wg2 sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg2.Add(1)
+		go func(i int) {
+			err := nodes[i].RefreshAll()
+			if err != nil {
+				t.Errorf("failed refreshing: %v\n", err)
+			}
+			wg2.Done()
+		}(i)
+	}
+	wg2.Wait()
+
+	log.Printf("Lookup")
+	id := MathRandId()
+	peers := nodes[0].Lookup(id)
+	sortByDistance(nodePeers, id)
+	expectedPeers := nodePeers[:k]
+	if len(peers) != len(expectedPeers) {
+		t.Errorf("lookup returned wrong number of peers\n")
+	}
+	for i, peer := range peers {
+		if !eq(peer.Id, expectedPeers[i].Id) {
+			t.Errorf("unexpected peer: %d\n", i)
+		}
+	}
+
+	log.Printf("Done")
+}

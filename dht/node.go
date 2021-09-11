@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/mduszyk/gopeers/store"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -145,59 +146,90 @@ func (node *KadNode) RefreshAll() error {
 
 func (node *KadNode) Lookup(id Id) []*Peer {
 	peers := node.Tree.closest(id, node.k)
-	seen := make(map[string]bool)
 
+	seen := make(map[string]bool)
 	for _, peer := range peers {
 		key := string(peer.Id.Bytes())
 		seen[key] = true
 	}
+
+	queried := make([]*Peer, 0, node.k)
 
 	type result struct {
 		peer *Peer
 		found []*Peer
 	}
 
-	queried := make([]*Peer, 0, node.k)
-	failed := make([]*Peer, 0, node.k)
-	success := make(chan result, node.alpha)
-	failure := make(chan *Peer, node.alpha)
+	input, output := Pool(node.alpha, func(payload Payload) (Payload, error) {
+		peer := payload.(*Peer)
+		found, err := peer.Proto.FindNode(node.Peer, id)
+		return result{peer, found}, err
+	})
+	defer close(input)
 
-	for len(peers) > 0 && len(queried) < node.k {
-		n := min(node.alpha, len(peers))
-		for _, peer := range peers[:n] {
-			go func(peer *Peer) {
-				found, err := peer.Proto.FindNode(node.Peer, id)
-				if err != nil {
-					log.Printf("FindNode failed: %v\n", err)
-					failure <- peer
-				} else {
-					success <- result{peer, found}
+	n := min(node.alpha, len(peers))
+	for _, peer := range peers[:n] {
+		input <- peer
+	}
+	peers = peers[n:]
+	inN := n
+	outN := 0
+
+	for outN < inN {
+		r := <- output
+		outN += 1
+		peer := r.value.(result).peer
+
+		if r.err != nil {
+			log.Printf("FindNode failed: %v\n", r.err)
+		} else {
+			found := r.value.(result).found
+			queried = append(queried, peer)
+			for _, p := range found {
+				key := string(p.Id.Bytes())
+				if _, ok := seen[key]; !ok {
+					peers = append(peers, p)
+					seen[key] = true
 				}
-			}(peer)
-		}
-		peers = peers[n:]
-		for i := 0; i < n; i++ {
-			select {
-			case r := <-success:
-				queried = append(queried, r.peer)
-				for _, peer := range r.found {
-					key := string(peer.Id.Bytes())
-					if _, ok := seen[key]; !ok {
-						peers = append(peers, peer)
-						seen[key] = true
-					}
-				}
-			case p := <-failure:
-				failed = append(failed, p)
 			}
+			sortByDistance(peers, id)
 		}
-		sortByDistance(peers, id)
+
+		if len(peers) > 0 && len(queried) < node.k {
+			input <- peers[0]
+			inN += 1
+			peers = peers[1:]
+		}
 	}
 
 	peers = append(peers, queried...)
 	sortByDistance(peers, id)
 
 	return peers[:min(node.k, len(peers))]
+}
+
+// Storage interface
+
+func (node *KadNode) Set(key []byte, value []byte) error {
+	id := BytesId(key)
+	peers := node.Lookup(id)
+	var wg sync.WaitGroup
+	wg.Add(len(peers))
+	parallelize(peers, func(peer *Peer) {
+		err := peer.Proto.Store(node.Peer, id, value)
+		if err != nil {
+			log.Printf("Store failed, peer: %v, error: %v\n", peer, err)
+		}
+		wg.Done()
+	})
+	wg.Wait()
+	// TODO what if all store fail
+	return nil
+}
+
+func (node *KadNode) Get(key []byte) ([]byte, error) {
+	// TODO
+	return nil, nil
 }
 
 // Protocol interface

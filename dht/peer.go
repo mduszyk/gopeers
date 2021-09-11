@@ -35,3 +35,9 @@ func sortByDistance(peers []*Peer, id Id) {
 		return lt(di, dj)
 	})
 }
+
+func parallelize(peers []*Peer, f func (peer *Peer)) {
+	for _, peer := range peers {
+		go f(peer)
+	}
+}
