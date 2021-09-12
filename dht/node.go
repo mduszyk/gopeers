@@ -197,7 +197,7 @@ func (node *KadNode) Lookup(id Id, findValue bool) (*FindResult, error) {
 				queried = append(queried, peer)
 				for _, p := range findResult.peers {
 					key := string(p.Id.Bytes())
-					if _, ok := seen[key]; !ok {
+					if _, ok := seen[key]; !ok && !eq(node.Peer.Id, p.Id) {
 						peers = insertSorted(peers, p, id)
 						seen[key] = true
 					}
@@ -277,6 +277,7 @@ func (node *KadNode) FindNode(sender *Peer, id Id) (*FindResult, error) {
 }
 
 func (node *KadNode) FindValue(sender *Peer, key Id) (*FindResult, error) {
+	node.add(sender)
 	value, err := node.Storage.Get(key.Bytes())
 	if err != nil {
 		node.Tree.mutex.RLock()
@@ -290,6 +291,7 @@ func (node *KadNode) FindValue(sender *Peer, key Id) (*FindResult, error) {
 }
 
 func (node *KadNode) Store(sender *Peer, key Id, value []byte) error {
+	node.add(sender)
 	log.Printf("Store, peer: %d, key: %d\n", node.Peer.Id, key)
 	return node.Storage.Set(key.Bytes(), value)
 }
