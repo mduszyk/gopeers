@@ -230,8 +230,71 @@ func (node *KadNode) Set(key []byte, value []byte) error {
 }
 
 func (node *KadNode) Get(key []byte) ([]byte, error) {
-	// TODO
-	return nil, nil
+	id := BytesId(key)
+	peers := node.Tree.closest(id, node.k)
+
+	seen := make(map[string]bool)
+	for _, peer := range peers {
+		key := string(peer.Id.Bytes())
+		seen[key] = true
+	}
+
+	queried := make([]*Peer, 0, node.k)
+
+	type result struct {
+		peer *Peer
+		findResult *FindResult
+	}
+
+	input, output := Pool(node.alpha, func(payload Payload) (Payload, error) {
+		peer := payload.(*Peer)
+		found, err := peer.Proto.FindValue(node.Peer, id)
+		return result{peer, found}, err
+	})
+	defer close(input)
+
+	n := min(node.alpha, len(peers))
+	for _, peer := range peers[:n] {
+		input <- peer
+	}
+	peers = peers[n:]
+	inN := n
+	outN := 0
+
+	for outN < inN {
+		r := <- output
+		outN += 1
+		peer := r.value.(result).peer
+
+		if r.err != nil {
+			log.Printf("FindNode failed: %v\n", r.err)
+		} else {
+			findResult := r.value.(result).findResult
+			if findResult.peers != nil {
+				queried = append(queried, peer)
+				for _, p := range findResult.peers {
+					key := string(p.Id.Bytes())
+					if _, ok := seen[key]; !ok {
+						peers = append(peers, p)
+						seen[key] = true
+					}
+				}
+				sortByDistance(peers, id)
+			} else {
+				return findResult.value, nil
+			}
+		}
+
+		pending := inN - outN
+		missing := node.k - len(queried)
+		if len(peers) > 0 && pending < missing {
+			input <- peers[0]
+			inN += 1
+			peers = peers[1:]
+		}
+	}
+
+	return nil, errors.New("not found")
 }
 
 // Protocol interface

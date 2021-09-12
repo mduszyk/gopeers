@@ -5,6 +5,7 @@ import (
 	"github.com/mduszyk/gopeers/store"
 	"log"
 	"math/big"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -175,7 +176,7 @@ func TestNodeJoin(t *testing.T) {
 	log.Printf("Done")
 }
 
-func TestLookup(t *testing.T) {
+func TestLookupSetGet(t *testing.T) {
 	n := 400
 	k := 20
 	b := 5
@@ -236,11 +237,19 @@ func TestLookup(t *testing.T) {
 		}
 	}
 
-	// TODO move to separate test
-	key := MathRandId()
-	err := nodes[0].Set(key.Bytes(), []byte("test"))
+	key := MathRandId().Bytes()
+	value := []byte("test")
+	err := nodes[0].Set(key, value)
 	if err != nil {
-		t.Errorf("store failed: %v\n", err)
+		t.Errorf("set failed: %v\n", err)
+	}
+
+	value2, err := nodes[n-1].Get(key)
+	if err != nil {
+		t.Errorf("get failed: %v\n", err)
+	}
+	if !reflect.DeepEqual(value2, value) {
+		t.Errorf("got invalid value: %v\n", value)
 	}
 
 	log.Printf("Done")
