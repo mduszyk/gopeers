@@ -236,5 +236,12 @@ func TestLookup(t *testing.T) {
 		}
 	}
 
+	// TODO move to separate test
+	key := MathRandId()
+	err := nodes[0].Set(key.Bytes(), []byte("test"))
+	if err != nil {
+		t.Errorf("store failed: %v\n", err)
+	}
+
 	log.Printf("Done")
 }

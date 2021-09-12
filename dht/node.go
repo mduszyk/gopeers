@@ -263,5 +263,6 @@ func (node *KadNode) FindValue(sender *Peer, key Id) (*FindResult, error) {
 }
 
 func (node *KadNode) Store(sender *Peer, key Id, value []byte) error {
+	log.Printf("Store, peer: %d, key: %d\n", node.Peer.Id, key)
 	return node.Storage.Set(key.Bytes(), value)
 }
