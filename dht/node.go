@@ -5,6 +5,7 @@ import (
 	"github.com/mduszyk/gopeers/store"
 	"log"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -235,15 +236,19 @@ func (node *KadNode) Set(key []byte, value []byte) error {
 	}
 	var wg sync.WaitGroup
 	wg.Add(len(findResult.peers))
+	var failures int32
 	parallelize(findResult.peers, func(peer *Peer) {
 		err := peer.Proto.Store(node.Peer, id, value)
 		if err != nil {
+			atomic.AddInt32(&failures, 1)
 			log.Printf("Store failed, peer: %v, error: %v\n", peer, err)
 		}
 		wg.Done()
 	})
 	wg.Wait()
-	// TODO what if all store fail
+	if failures >= int32(node.k / 2) {
+		return errors.New("half or more stores failed")
+	}
 	return nil
 }
 
