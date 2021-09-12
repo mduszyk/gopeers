@@ -69,14 +69,14 @@ func TestUdpFindNode(t *testing.T) {
 
 	id := big.NewInt(0)
 	// node2 calls node1
-	peers, err := node1Peer.Proto.FindNode(node2.dhtNode.Peer, id)
+	findResult, err := node1Peer.Proto.FindNode(node2.dhtNode.Peer, id)
 	if err != nil {
 		t.Errorf("failed finding nodes: %v\n", err)
 	}
-	if len(peers) != 1 {
+	if len(findResult.peers) != 1 {
 		t.Errorf("got incorrect number of nodes\n")
 	}
-	if !eq(peers[0].Id, node2.dhtNode.Peer.Id) {
+	if !eq(findResult.peers[0].Id, node2.dhtNode.Peer.Id) {
 		t.Errorf("found incorrect peer\n")
 	}
 }

@@ -89,11 +89,11 @@ func (node *KadNode) add(peer *Peer) bool {
 func (node *KadNode) Join(peer *Peer) error {
 	node.add(peer)
 
-	peers, err := peer.Proto.FindNode(node.Peer, node.Peer.Id)
+	result, err := peer.Proto.FindNode(node.Peer, node.Peer.Id)
 	if err != nil {
 		return err
 	}
-	for _, p := range peers {
+	for _, p := range result.peers {
 		node.add(p)
 	}
 
@@ -115,11 +115,11 @@ func (node *KadNode) refresh(b *bucket) error {
 	id := MathRandIdRange(b.lo, b.hi)
 
 	for _, peer := range b.peers {
-		peers, err := peer.Proto.FindNode(node.Peer, id)
+		result, err := peer.Proto.FindNode(node.Peer, id)
 		if err != nil {
 			return err
 		}
-		for _, p := range peers {
+		for _, p := range result.peers {
 			node.add(p)
 		}
 	}
@@ -144,7 +144,7 @@ func (node *KadNode) RefreshAll() error {
 	return node.refreshBuckets(buckets)
 }
 
-func (node *KadNode) Lookup(id Id) []*Peer {
+func (node *KadNode) Lookup(id Id, findValue bool) (*FindResult, error) {
 	peers := node.Tree.closest(id, node.k)
 
 	seen := make(map[string]bool)
@@ -155,15 +155,21 @@ func (node *KadNode) Lookup(id Id) []*Peer {
 
 	queried := make([]*Peer, 0, node.k)
 
-	type result struct {
+	type poolResult struct {
 		peer *Peer
-		found []*Peer
+		findResult *FindResult
 	}
 
 	input, output := Pool(node.alpha, func(payload Payload) (Payload, error) {
 		peer := payload.(*Peer)
-		found, err := peer.Proto.FindNode(node.Peer, id)
-		return result{peer, found}, err
+		var findResult *FindResult
+		var err error
+		if findValue {
+			findResult, err = peer.Proto.FindValue(node.Peer, id)
+		} else {
+			findResult, err = peer.Proto.FindNode(node.Peer, id)
+		}
+		return poolResult{peer: peer, findResult: findResult}, err
 	})
 	defer close(input)
 
@@ -178,21 +184,25 @@ func (node *KadNode) Lookup(id Id) []*Peer {
 	for outN < inN {
 		r := <- output
 		outN += 1
-		peer := r.value.(result).peer
+		peer := r.value.(poolResult).peer
 
 		if r.err != nil {
 			log.Printf("FindNode failed: %v\n", r.err)
 		} else {
-			found := r.value.(result).found
-			queried = append(queried, peer)
-			for _, p := range found {
-				key := string(p.Id.Bytes())
-				if _, ok := seen[key]; !ok {
-					peers = append(peers, p)
-					seen[key] = true
+			findResult := r.value.(poolResult).findResult
+			if findResult.value != nil {
+				return findResult, nil
+			} else {
+				queried = append(queried, peer)
+				for _, p := range findResult.peers {
+					key := string(p.Id.Bytes())
+					if _, ok := seen[key]; !ok {
+						peers = append(peers, p)
+						seen[key] = true
+					}
 				}
+				sortByDistance(peers, id)
 			}
-			sortByDistance(peers, id)
 		}
 
 		pending := inN - outN
@@ -204,20 +214,28 @@ func (node *KadNode) Lookup(id Id) []*Peer {
 		}
 	}
 
-	peers = append(peers, queried...)
-	sortByDistance(peers, id)
-
-	return peers[:min(node.k, len(peers))]
+	if findValue {
+		return nil, errors.New("not found")
+	} else {
+		peers = append(peers, queried...)
+		sortByDistance(peers, id)
+		peers = peers[:min(node.k, len(peers))]
+		result := &FindResult{peers: peers, value: nil}
+		return result, nil
+	}
 }
 
 // Storage interface
 
 func (node *KadNode) Set(key []byte, value []byte) error {
 	id := BytesId(key)
-	peers := node.Lookup(id)
+	findResult, err := node.Lookup(id, false)
+	if err != nil {
+		return err
+	}
 	var wg sync.WaitGroup
-	wg.Add(len(peers))
-	parallelize(peers, func(peer *Peer) {
+	wg.Add(len(findResult.peers))
+	parallelize(findResult.peers, func(peer *Peer) {
 		err := peer.Proto.Store(node.Peer, id, value)
 		if err != nil {
 			log.Printf("Store failed, peer: %v, error: %v\n", peer, err)
@@ -231,70 +249,11 @@ func (node *KadNode) Set(key []byte, value []byte) error {
 
 func (node *KadNode) Get(key []byte) ([]byte, error) {
 	id := BytesId(key)
-	peers := node.Tree.closest(id, node.k)
-
-	seen := make(map[string]bool)
-	for _, peer := range peers {
-		key := string(peer.Id.Bytes())
-		seen[key] = true
+	findResult, err := node.Lookup(id, true)
+	if err != nil {
+		return nil, err
 	}
-
-	queried := make([]*Peer, 0, node.k)
-
-	type result struct {
-		peer *Peer
-		findResult *FindResult
-	}
-
-	input, output := Pool(node.alpha, func(payload Payload) (Payload, error) {
-		peer := payload.(*Peer)
-		found, err := peer.Proto.FindValue(node.Peer, id)
-		return result{peer, found}, err
-	})
-	defer close(input)
-
-	n := min(node.alpha, len(peers))
-	for _, peer := range peers[:n] {
-		input <- peer
-	}
-	peers = peers[n:]
-	inN := n
-	outN := 0
-
-	for outN < inN {
-		r := <- output
-		outN += 1
-		peer := r.value.(result).peer
-
-		if r.err != nil {
-			log.Printf("FindNode failed: %v\n", r.err)
-		} else {
-			findResult := r.value.(result).findResult
-			if findResult.peers != nil {
-				queried = append(queried, peer)
-				for _, p := range findResult.peers {
-					key := string(p.Id.Bytes())
-					if _, ok := seen[key]; !ok {
-						peers = append(peers, p)
-						seen[key] = true
-					}
-				}
-				sortByDistance(peers, id)
-			} else {
-				return findResult.value, nil
-			}
-		}
-
-		pending := inN - outN
-		missing := node.k - len(queried)
-		if len(peers) > 0 && pending < missing {
-			input <- peers[0]
-			inN += 1
-			peers = peers[1:]
-		}
-	}
-
-	return nil, errors.New("not found")
+	return findResult.value, nil
 }
 
 // Protocol interface
@@ -304,12 +263,12 @@ func (node *KadNode) Ping(sender *Peer, randomId Id) (Id, error) {
 	return randomId, nil
 }
 
-func (node *KadNode) FindNode(sender *Peer, id Id) ([]*Peer, error) {
+func (node *KadNode) FindNode(sender *Peer, id Id) (*FindResult, error) {
 	node.add(sender)
 	node.Tree.mutex.RLock()
 	peers := node.Tree.closest(id, node.Tree.k)
 	node.Tree.mutex.RUnlock()
-	return peers, nil
+	return &FindResult{peers: peers, value: nil}, nil
 }
 
 func (node *KadNode) FindValue(sender *Peer, key Id) (*FindResult, error) {

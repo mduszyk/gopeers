@@ -225,13 +225,16 @@ func TestLookupSetGet(t *testing.T) {
 
 	log.Printf("Lookup")
 	id := MathRandId()
-	peers := nodes[0].Lookup(id)
+	findResult, err := nodes[0].Lookup(id, false)
+	if err != nil {
+		t.Errorf("lookup failed: %v\n", err)
+	}
 	sortByDistance(nodePeers, id)
 	expectedPeers := nodePeers[:k]
-	if len(peers) != len(expectedPeers) {
+	if len(findResult.peers) != len(expectedPeers) {
 		t.Errorf("lookup returned wrong number of peers\n")
 	}
-	for i, peer := range peers {
+	for i, peer := range findResult.peers {
 		if !eq(peer.Id, expectedPeers[i].Id) {
 			t.Errorf("unexpected peer: %d\n", i)
 		}
@@ -239,7 +242,7 @@ func TestLookupSetGet(t *testing.T) {
 
 	key := MathRandId().Bytes()
 	value := []byte("test")
-	err := nodes[0].Set(key, value)
+	err = nodes[0].Set(key, value)
 	if err != nil {
 		t.Errorf("set failed: %v\n", err)
 	}
