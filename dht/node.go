@@ -246,7 +246,7 @@ func (node *KadNode) Set(key []byte, value []byte) error {
 		wg.Done()
 	})
 	wg.Wait()
-	if failures >= int32(node.k / 2) {
+	if failures >= int32(len(findResult.peers) / 2) {
 		return errors.New("half or more stores failed")
 	}
 	return nil
