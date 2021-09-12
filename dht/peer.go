@@ -41,3 +41,14 @@ func parallelize(peers []*Peer, f func (peer *Peer)) {
 		go f(peer)
 	}
 }
+
+func insertSorted(peers []*Peer, peer *Peer, id Id) []*Peer {
+	d := xor(id, peer.Id)
+	i := sort.Search(len(peers), func(i int) bool {
+		return lt(d, xor(id, peers[i].Id))
+	})
+	peers = append(peers, nil)
+    copy(peers[i+1:], peers[i:])
+    peers[i] = peer
+	return peers
+}

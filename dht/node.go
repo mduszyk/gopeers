@@ -178,18 +178,18 @@ func (node *KadNode) Lookup(id Id, findValue bool) (*FindResult, error) {
 		input <- peer
 	}
 	peers = peers[n:]
-	inN := n
-	outN := 0
+	in := n
+	out := 0
 
-	for outN < inN {
-		r := <- output
-		outN += 1
-		peer := r.value.(poolResult).peer
+	for out < in {
+		result := <-output
+		out += 1
+		peer := result.value.(poolResult).peer
 
-		if r.err != nil {
-			log.Printf("FindNode failed: %v\n", r.err)
+		if result.err != nil {
+			log.Printf("FindNode failed: %v\n", result.err)
 		} else {
-			findResult := r.value.(poolResult).findResult
+			findResult := result.value.(poolResult).findResult
 			if findResult.value != nil {
 				return findResult, nil
 			} else {
@@ -197,32 +197,32 @@ func (node *KadNode) Lookup(id Id, findValue bool) (*FindResult, error) {
 				for _, p := range findResult.peers {
 					key := string(p.Id.Bytes())
 					if _, ok := seen[key]; !ok {
-						peers = append(peers, p)
+						peers = insertSorted(peers, p, id)
 						seen[key] = true
 					}
 				}
-				sortByDistance(peers, id)
 			}
 		}
 
-		pending := inN - outN
+		pending := in - out
 		missing := node.k - len(queried)
 		if len(peers) > 0 && pending < missing {
 			input <- peers[0]
-			inN += 1
 			peers = peers[1:]
+			in += 1
 		}
 	}
 
 	if findValue {
 		return nil, errors.New("not found")
-	} else {
-		peers = append(peers, queried...)
-		sortByDistance(peers, id)
-		peers = peers[:min(node.k, len(peers))]
-		result := &FindResult{peers: peers, value: nil}
-		return result, nil
 	}
+
+	for _, p := range queried {
+		peers = insertSorted(peers, p, id)
+	}
+	peers = peers[:min(node.k, len(peers))]
+	result := &FindResult{peers: peers, value: nil}
+	return result, nil
 }
 
 // Storage interface
