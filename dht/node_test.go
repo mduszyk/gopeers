@@ -2,8 +2,10 @@ package dht
 
 import (
 	"fmt"
+	"github.com/mduszyk/gopeers/store"
 	"log"
 	"math/big"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -13,7 +15,9 @@ func TestAddFind(t *testing.T) {
 	nodeId := big.NewInt(0)
 	k := 20
 	b := 5
-	node := NewKadNode(k, b, nodeId)
+	alpha := 3
+	storage := store.NewMemStorage()
+	node := NewKadNode(k, b, alpha, nodeId, storage)
 	for i := 0; i < k; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
@@ -34,7 +38,9 @@ func TestBucketListSplit(t *testing.T) {
 	nodeId := big.NewInt(0)
 	k := 20
 	b := 5
-	node := NewKadNode(k, b, nodeId)
+	alpha := 3
+	storage := store.NewMemStorage()
+	node := NewKadNode(k, b, alpha, nodeId, storage)
 	for i := 0; i < k+1; i++ {
 		id := Sha1Id([]byte(fmt.Sprintf("test%d", i)))
 		peer := &Peer{id, nil, time.Now()}
@@ -55,12 +61,13 @@ func TestBucketListSplit(t *testing.T) {
 }
 
 func TestNodePing(t *testing.T) {
-	p2pNode1, err := NewRandomIdKadNode(20, 5)
+	storage := store.NewMemStorage()
+	p2pNode1, err := NewRandomIdKadNode(20, 5, 3, storage)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	p2pNode2, err := NewRandomIdKadNode(20, 5)
+	p2pNode2, err := NewRandomIdKadNode(20, 5, 3, storage)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -82,12 +89,13 @@ func TestNodePing(t *testing.T) {
 }
 
 func TestNodeTrivialJoin(t *testing.T) {
-	node1, err := NewRandomIdKadNode(20, 5)
+	storage := store.NewMemStorage()
+	node1, err := NewRandomIdKadNode(20, 5, 3, storage)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2, err := NewRandomIdKadNode(20, 5)
+	node2, err := NewRandomIdKadNode(20, 5, 3, storage)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -108,11 +116,13 @@ func TestNodeJoin(t *testing.T) {
 	n := 400
 	k := 20
 	b := 5
+	alpha := 3
 	nodes := make([]*KadNode, n)
 
 	log.Printf("Generating nodes, n: %d", n)
 	for i := 0; i < n; i++ {
-		node, err := NewRandomIdKadNode(k, b)
+		storage := store.NewMemStorage()
+		node, err := NewRandomIdKadNode(k, b, alpha, storage)
 		if err != nil {
 			t.Errorf("failed creating node: %v\n", err)
 		}
@@ -163,5 +173,87 @@ func TestNodeJoin(t *testing.T) {
 			t.Errorf("node didn't join\n")
 		}
 	}
+	log.Printf("Done")
+}
+
+func TestLookupSetGet(t *testing.T) {
+	n := 400
+	k := 20
+	b := 5
+	alpha := 3
+	nodes := make([]*KadNode, n)
+	nodePeers := make([]*Peer, 0, n)
+
+	log.Printf("Generating nodes, n: %d", n)
+	for i := 0; i < n; i++ {
+		storage := store.NewMemStorage()
+		node, err := NewRandomIdKadNode(k, b, alpha, storage)
+		nodePeers = append(nodePeers, node.Peer)
+		if err != nil {
+			t.Errorf("failed creating node: %v\n", err)
+		}
+		nodes[i] = node
+	}
+
+	log.Printf("Joining")
+	var wg1 sync.WaitGroup
+	for i := 1; i < n; i++ {
+		wg1.Add(1)
+		go func(i int) {
+			err := nodes[i].Join(nodes[0].Peer)
+			if err != nil {
+				t.Errorf("failed joining: %v\n", err)
+			}
+			wg1.Done()
+		}(i)
+	}
+	wg1.Wait()
+
+	log.Printf("Refreshing")
+	var wg2 sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg2.Add(1)
+		go func(i int) {
+			err := nodes[i].RefreshAll()
+			if err != nil {
+				t.Errorf("failed refreshing: %v\n", err)
+			}
+			wg2.Done()
+		}(i)
+	}
+	wg2.Wait()
+
+	log.Printf("Lookup")
+	id := MathRandId()
+	findResult, err := nodes[0].Lookup(id, false)
+	if err != nil {
+		t.Errorf("lookup failed: %v\n", err)
+	}
+	sortByDistance(nodePeers, id)
+	expectedPeers := nodePeers[:k]
+	if len(findResult.peers) != len(expectedPeers) {
+		t.Errorf("lookup returned wrong number of peers\n")
+	}
+	for i, peer := range findResult.peers {
+		if !eq(peer.Id, expectedPeers[i].Id) {
+			t.Errorf("unexpected peer: %d\n", i)
+		}
+	}
+
+	key := MathRandId().Bytes()
+	value := []byte("test")
+	err = nodes[0].Set(key, value)
+	if err != nil {
+		t.Errorf("set failed: %v\n", err)
+	}
+
+	value2, err := nodes[n-1].Get(key)
+	if err != nil {
+		t.Errorf("get failed: %v\n", err)
+	}
+	if !reflect.DeepEqual(value2, value) {
+		t.Errorf("got invalid value: %v\n", value)
+	}
+
 	log.Printf("Done")
 }
