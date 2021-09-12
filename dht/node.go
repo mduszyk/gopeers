@@ -195,7 +195,9 @@ func (node *KadNode) Lookup(id Id) []*Peer {
 			sortByDistance(peers, id)
 		}
 
-		if len(peers) > 0 && len(queried) < node.k {
+		pending := inN - outN
+		missing := node.k - len(queried)
+		if len(peers) > 0 && pending < missing {
 			input <- peers[0]
 			inN += 1
 			peers = peers[1:]
