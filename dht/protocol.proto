@@ -12,9 +12,9 @@ message PingResponse {
   bytes RandomId = 1;
 }
 
-message FindNodeRequest {
+message FindRequest {
   bytes PeerId = 1;
-  bytes NodeId = 2;
+  bytes Id = 2;
 }
 
 message UDPAddr {
@@ -32,3 +32,13 @@ message FindNodeResponse {
   repeated UdpNode nodes = 1;
 }
 
+message FindValueResponse {
+  repeated UdpNode nodes = 1;
+  bytes value = 2;
+}
+
+message StoreRequest {
+  bytes PeerId = 1;
+  bytes Key = 2;
+  bytes Value = 3;
+}

@@ -96,14 +96,14 @@ func (n *udpProtocolNode) PingRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.P
 }
 
 func (n *udpProtocolNode) FindNodeRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
-	var request FindNodeRequest
+	var request FindRequest
 	err := proto.Unmarshal(payload, &request)
 	if err != nil {
 		return nil, err
 	}
 	peer := NewPeer(BytesId(request.PeerId))
 	n.Connect(addr, peer)
-	findResult, err := n.dhtNode.FindNode(peer, BytesId(request.NodeId))
+	findResult, err := n.dhtNode.FindNode(peer, BytesId(request.PeerId))
 	if err != nil {
 		return nil, err
 	}
@@ -122,13 +122,47 @@ func (n *udpProtocolNode) FindNodeRpc(addr *net.UDPAddr, payload rpc.Payload) (r
 }
 
 func (n *udpProtocolNode) FindValueRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
-	// TODO
-	return nil, nil
+	var request FindRequest
+	err := proto.Unmarshal(payload, &request)
+	if err != nil {
+		return nil, err
+	}
+	peer := NewPeer(BytesId(request.PeerId))
+	n.Connect(addr, peer)
+	findResult, err := n.dhtNode.FindValue(peer, BytesId(request.Id))
+	if err != nil {
+		return nil, err
+	}
+	var nodes []*UdpNode
+	if findResult.peers != nil {
+		nodes = make([]*UdpNode, len(findResult.peers))
+		for i := 0; i < len(findResult.peers); i++ {
+			protocol := (findResult.peers[i].Proto).(*udpProtocol)
+			protoAddr := &UDPAddr{
+				IP:   protocol.addr.IP,
+				Port: int32(protocol.addr.Port),
+				Zone: protocol.addr.Zone,
+			}
+			nodes[i] = &UdpNode{Addr: protoAddr, NodeId: findResult.peers[i].Id.Bytes()}
+		}
+	}
+	response := FindValueResponse{Nodes: nodes, Value: findResult.value}
+	return proto.Marshal(&response)
 }
 
 func (n *udpProtocolNode) StoreRpc(addr *net.UDPAddr, payload rpc.Payload) (rpc.Payload, error) {
-	// TODO
-	return nil, nil
+	var request StoreRequest
+	err := proto.Unmarshal(payload, &request)
+	if err != nil {
+		return nil, err
+	}
+	peer := NewPeer(BytesId(request.PeerId))
+	n.Connect(addr, peer)
+	err = n.dhtNode.Store(peer, BytesId(request.Key), request.Value)
+	if err != nil {
+		return nil, err
+	}
+	return nil, err
 }
 
 type udpProtocol struct {
@@ -165,9 +199,9 @@ func (p *udpProtocol) Ping(_ *Peer, randomId Id) (Id, error) {
 }
 
 func (p *udpProtocol) FindNode(_ *Peer, id Id) (*FindResult, error) {
-	request := FindNodeRequest{
+	request := FindRequest{
 		PeerId: p.protocolNode.dhtNode.Peer.Id.Bytes(),
-		NodeId: id.Bytes(),
+		Id: id.Bytes(),
 	}
 	requestPayload, err := proto.Marshal(&request)
 	if err != nil {
@@ -200,11 +234,54 @@ func (p *udpProtocol) FindNode(_ *Peer, id Id) (*FindResult, error) {
 
 
 func (p *udpProtocol) FindValue(sender *Peer, key Id) (*FindResult, error) {
-	// TODO
-	return nil, nil
+	request := FindRequest{
+		PeerId: p.protocolNode.dhtNode.Peer.Id.Bytes(),
+		Id: key.Bytes(),
+	}
+	requestPayload, err := proto.Marshal(&request)
+	if err != nil {
+		return nil, err
+	}
+	responsePayload, err := p.protocolNode.rpcNode.Call(
+		p.addr, p.protocolNode.findValueServiceId, requestPayload)
+	if err != nil {
+		return nil, err
+	}
+	var response FindValueResponse
+	err = proto.Unmarshal(responsePayload, &response)
+	if err != nil {
+		return nil, err
+	}
+	var peers []*Peer
+	if response.Nodes != nil {
+		peers = make([]*Peer, len(response.Nodes))
+		for i := 0; i < len(response.Nodes); i++ {
+			n := response.Nodes[i]
+			peer := &Peer{Id: BytesId(n.NodeId), LastSeen: time.Now()}
+			addr := &net.UDPAddr{
+				IP:   n.Addr.IP,
+				Port: int(n.Addr.Port),
+				Zone: n.Addr.Zone,
+			}
+			p.protocolNode.Connect(addr, peer)
+			peers[i] = peer
+		}
+	}
+	result := &FindResult{peers: peers, value: response.Value}
+	return result, nil
 }
 
 func (p *udpProtocol) Store(sender *Peer, key Id, value []byte) error {
-	// TODO
-	return nil
+	request := StoreRequest{
+		PeerId: p.protocolNode.dhtNode.Peer.Id.Bytes(),
+		Key: key.Bytes(),
+		Value: value,
+	}
+	requestPayload, err := proto.Marshal(&request)
+	if err != nil {
+		return err
+	}
+	_, err = p.protocolNode.rpcNode.Call(
+		p.addr, p.protocolNode.storeServiceId, requestPayload)
+	return err
 }
