@@ -22,15 +22,6 @@ func NewKadNode(k, b, alpha int, id Id, storage store.Storage) *KadNode {
 	return node
 }
 
-func NewRandomIdKadNode(k, b, alpha int, storage store.Storage) (*KadNode, error) {
-	nodeId, err := CryptoRandId()
-	if err != nil {
-		return nil, err
-	}
-	node := NewKadNode(k, b, alpha, nodeId, storage)
-	return node, nil
-}
-
 func (node *KadNode) callPing(peer *Peer) error {
 	randomId, err := CryptoRandId()
 	if err != nil {

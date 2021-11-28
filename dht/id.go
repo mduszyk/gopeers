@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"math/bits"
 	mathRand "math/rand"
+	"time"
 )
 
 type Id = *big.Int
@@ -15,8 +16,8 @@ const IdBits = 160
 var maxId = new(big.Int).Lsh(big.NewInt(1), IdBits)
 
 func MathRandId() Id {
-	r := mathRand.New(mathRand.NewSource(1))
-	return new(big.Int).Rand(r, maxId)
+	rnd := mathRand.New(mathRand.NewSource(time.Now().UnixNano()))
+	return new(big.Int).Rand(rnd, maxId)
 }
 
 func MathRandIdRange(lo Id, hi Id) Id {

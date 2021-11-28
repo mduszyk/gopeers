@@ -62,20 +62,9 @@ func TestBucketListSplit(t *testing.T) {
 
 func TestNodePing(t *testing.T) {
 	storage := store.NewMemStorage()
-	p2pNode1, err := NewRandomIdKadNode(20, 5, 3, storage)
-	if err != nil {
-		t.Errorf("failed creating node: %v\n", err)
-	}
-
-	p2pNode2, err := NewRandomIdKadNode(20, 5, 3, storage)
-	if err != nil {
-		t.Errorf("failed creating node: %v\n", err)
-	}
-
-	randomId, err := CryptoRandId()
-	if err != nil {
-		t.Errorf("failed generating random Id: %v\n", err)
-	}
+	p2pNode1 := NewKadNode(20, 5, 3, MathRandId(), storage)
+	p2pNode2 := NewKadNode(20, 5, 3, MathRandId(), storage)
+	randomId := MathRandId()
 	echoId, err := p2pNode1.Ping(p2pNode2.Peer, randomId)
 	if err != nil {
 		t.Errorf("failed pinging: %v\n", err)
@@ -90,17 +79,9 @@ func TestNodePing(t *testing.T) {
 
 func TestNodeTrivialJoin(t *testing.T) {
 	storage := store.NewMemStorage()
-	node1, err := NewRandomIdKadNode(20, 5, 3, storage)
-	if err != nil {
-		t.Errorf("failed creating node: %v\n", err)
-	}
-
-	node2, err := NewRandomIdKadNode(20, 5, 3, storage)
-	if err != nil {
-		t.Errorf("failed creating node: %v\n", err)
-	}
-
-	err = node1.Join(node2.Peer)
+	node1 := NewKadNode(20, 5, 3, MathRandId(), storage)
+	node2 := NewKadNode(20, 5, 3, MathRandId(), storage)
+	err := node1.Join(node2.Peer)
 	if err != nil {
 		t.Errorf("failed joining: %v\n", err)
 	}
@@ -121,11 +102,7 @@ func TestNodeJoin(t *testing.T) {
 
 	log.Printf("Generating nodes, n: %d", n)
 	for i := 0; i < n; i++ {
-		storage := store.NewMemStorage()
-		node, err := NewRandomIdKadNode(k, b, alpha, storage)
-		if err != nil {
-			t.Errorf("failed creating node: %v\n", err)
-		}
+		node := NewKadNode(k, b, alpha, MathRandId(), store.NewMemStorage())
 		nodes[i] = node
 	}
 
@@ -186,11 +163,7 @@ func TestLookupSetGet(t *testing.T) {
 
 	log.Printf("Generating nodes, n: %d", n)
 	for i := 0; i < n; i++ {
-		storage := store.NewMemStorage()
-		node, err := NewRandomIdKadNode(k, b, alpha, storage)
-		if err != nil {
-			t.Errorf("failed creating node: %v\n", err)
-		}
+		node := NewKadNode(k, b, alpha, MathRandId(), store.NewMemStorage())
 		nodes[i] = node
 		peers[i] = node.Peer
 	}
