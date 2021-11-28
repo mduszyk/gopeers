@@ -112,7 +112,7 @@ func (node *KadNode) Join(peer *Peer) error {
 	return nil
 }
 
-func (node *KadNode) refresh(b *bucket) error {
+func (node *KadNode) refreshBucket(b *bucket) error {
 	id := MathRandIdRange(b.lo, b.hi)
 
 	for _, peer := range b.peers {
@@ -130,7 +130,7 @@ func (node *KadNode) refresh(b *bucket) error {
 
 func (node *KadNode) refreshBuckets(buckets []*bucket) error {
 	for _, b := range buckets {
-		err := node.refresh(b)
+		err := node.refreshBucket(b)
 		if err != nil {
 			return err
 		}
@@ -138,7 +138,7 @@ func (node *KadNode) refreshBuckets(buckets []*bucket) error {
 	return nil
 }
 
-func (node *KadNode) RefreshAll() error {
+func (node *KadNode) Refresh() error {
 	node.Tree.mutex.RLock()
 	buckets := node.Tree.buckets(node.Peer.Id)
 	node.Tree.mutex.RUnlock()

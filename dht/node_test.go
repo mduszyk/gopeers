@@ -148,7 +148,7 @@ func TestNodeJoin(t *testing.T) {
 	for i := 0; i < n; i++ {
 		wg2.Add(1)
 		go func(i int) {
-			err := nodes[i].RefreshAll()
+			err := nodes[i].Refresh()
 			if err != nil {
 				t.Errorf("failed refreshing: %v\n", err)
 			}
@@ -214,7 +214,7 @@ func TestLookupSetGet(t *testing.T) {
 	for i := 0; i < n; i++ {
 		wg2.Add(1)
 		go func(i int) {
-			err := nodes[i].RefreshAll()
+			err := nodes[i].Refresh()
 			if err != nil {
 				t.Errorf("failed refreshing: %v\n", err)
 			}

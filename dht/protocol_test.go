@@ -123,7 +123,7 @@ func TestUdpJoin(t *testing.T) {
 	for i := 0; i < n; i++ {
 		wg2.Add(1)
 		go func(i int) {
-			err := protoNodes[i].dhtNode.RefreshAll()
+			err := protoNodes[i].dhtNode.Refresh()
 			if err != nil {
 				t.Errorf("failed refreshing: %v\n", err)
 			}
@@ -196,7 +196,7 @@ func TestUdpLookupSetGet(t *testing.T) {
 	for i := 0; i < n; i++ {
 		wg2.Add(1)
 		go func(i int) {
-			err := protoNodes[i].dhtNode.RefreshAll()
+			err := protoNodes[i].dhtNode.Refresh()
 			if err != nil {
 				t.Errorf("failed refreshing: %v\n", err)
 			}
