@@ -182,17 +182,17 @@ func TestLookupSetGet(t *testing.T) {
 	b := 5
 	alpha := 3
 	nodes := make([]*KadNode, n)
-	nodePeers := make([]*Peer, 0, n)
+	peers := make([]*Peer, n)
 
 	log.Printf("Generating nodes, n: %d", n)
 	for i := 0; i < n; i++ {
 		storage := store.NewMemStorage()
 		node, err := NewRandomIdKadNode(k, b, alpha, storage)
-		nodePeers = append(nodePeers, node.Peer)
 		if err != nil {
 			t.Errorf("failed creating node: %v\n", err)
 		}
 		nodes[i] = node
+		peers[i] = node.Peer
 	}
 
 	log.Printf("Joining")
@@ -229,8 +229,8 @@ func TestLookupSetGet(t *testing.T) {
 	if err != nil {
 		t.Errorf("lookup failed: %v\n", err)
 	}
-	sortByDistance(nodePeers, id)
-	expectedPeers := nodePeers[:k]
+	sortByDistance(peers, id)
+	expectedPeers := peers[:k]
 	if len(findResult.peers) != len(expectedPeers) {
 		t.Errorf("lookup returned wrong number of peers\n")
 	}

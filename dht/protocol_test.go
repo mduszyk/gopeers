@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -88,7 +89,7 @@ func TestUdpJoin(t *testing.T) {
 	alpha := 3
 	basePort := 6000
 	protoNodes := make([]*udpProtocolNode, n)
-	peers := make([]*Peer, n)
+	firstNodePeers := make([]*Peer, n)
 
 	log.Printf("Generating nodes, n: %d", n)
 	for i := 0; i < n; i++ {
@@ -99,16 +100,16 @@ func TestUdpJoin(t *testing.T) {
 			t.Errorf("failed creating node: %v\n", err)
 		}
 		protoNodes[i] = protoNode
-		peers[i] = NewPeer(protoNodes[0].dhtNode.Peer.Id)
+		firstNodePeers[i] = NewPeer(protoNodes[0].dhtNode.Peer.Id)
 	}
 
 	log.Printf("Joining")
 	var wg1 sync.WaitGroup
 	for i := 1; i < n; i++ {
-		protoNodes[i].Connect(protoNodes[0].rpcNode.Addr, peers[i])
+		protoNodes[i].Connect(protoNodes[0].rpcNode.Addr, firstNodePeers[i])
 		wg1.Add(1)
 		go func(i int) {
-			err := protoNodes[i].dhtNode.Join(peers[i])
+			err := protoNodes[i].dhtNode.Join(firstNodePeers[i])
 			if err != nil {
 				t.Errorf("failed joining: %v\n", err)
 			}
@@ -149,5 +150,92 @@ func TestUdpJoin(t *testing.T) {
 			t.Errorf("node didn't join\n")
 		}
 	}
+	log.Printf("Done")
+}
+
+func TestUdpLookupSetGet(t *testing.T) {
+	n := 100
+	k := 20
+	b := 5
+	alpha := 3
+	basePort := 7000
+	protoNodes := make([]*udpProtocolNode, n)
+	peers := make([]*Peer, n)
+	firstNodePeers := make([]*Peer, n)
+
+	log.Printf("Generating nodes, n: %d", n)
+	for i := 0; i < n; i++ {
+		port := basePort + i
+		address := fmt.Sprintf("localhost:%d", port)
+		protoNode, err := StartUdpProtocolNode(k, b, alpha, address, callTimeout, bufferSize)
+		if err != nil {
+			t.Errorf("failed creating node: %v\n", err)
+		}
+		protoNodes[i] = protoNode
+		peers[i] = protoNodes[i].dhtNode.Peer
+		firstNodePeers[i] = NewPeer(protoNodes[0].dhtNode.Peer.Id)
+	}
+
+	log.Printf("Joining")
+	var wg1 sync.WaitGroup
+	for i := 1; i < n; i++ {
+		protoNodes[i].Connect(protoNodes[0].rpcNode.Addr, firstNodePeers[i])
+		wg1.Add(1)
+		go func(i int) {
+			err := protoNodes[i].dhtNode.Join(firstNodePeers[i])
+			if err != nil {
+				t.Errorf("failed joining: %v\n", err)
+			}
+			wg1.Done()
+		}(i)
+	}
+	wg1.Wait()
+
+	log.Printf("Refreshing")
+	var wg2 sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg2.Add(1)
+		go func(i int) {
+			err := protoNodes[i].dhtNode.RefreshAll()
+			if err != nil {
+				t.Errorf("failed refreshing: %v\n", err)
+			}
+			wg2.Done()
+		}(i)
+	}
+	wg2.Wait()
+
+	log.Printf("Lookup")
+	id := MathRandId()
+	findResult, err := protoNodes[0].dhtNode.Lookup(id, false)
+	if err != nil {
+		t.Errorf("lookup failed: %v\n", err)
+	}
+	sortByDistance(peers, id)
+	expectedPeers := peers[:k]
+	if len(findResult.peers) != len(expectedPeers) {
+		t.Errorf("lookup returned wrong number of peers\n")
+	}
+	for i, peer := range findResult.peers {
+		if !eq(peer.Id, expectedPeers[i].Id) {
+			t.Errorf("unexpected peer: %d\n", i)
+		}
+	}
+
+	key := MathRandId().Bytes()
+	value := []byte("test")
+	err = protoNodes[0].dhtNode.Set(key, value)
+	if err != nil {
+		t.Errorf("set failed: %v\n", err)
+	}
+
+	value2, err := protoNodes[n-1].dhtNode.Get(key)
+	if err != nil {
+		t.Errorf("get failed: %v\n", err)
+	}
+	if !reflect.DeepEqual(value2, value) {
+		t.Errorf("got invalid value: %v\n", value)
+	}
+
 	log.Printf("Done")
 }
