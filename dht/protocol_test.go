@@ -2,6 +2,7 @@ package dht
 
 import (
 	"fmt"
+	"github.com/mduszyk/gopeers/store"
 	"log"
 	"math/big"
 	"reflect"
@@ -14,12 +15,17 @@ var callTimeout = time.Minute
 var bufferSize = uint32(10240)
 
 func TestUdpPing(t *testing.T) {
-	node1ProtoServer, err := StartUdpProtocolNode(20, 5, 3, "localhost:4001", callTimeout, bufferSize)
+
+	node1ProtoServer, err := StartUdpProtocolNode(
+		20, 5, 3,
+		MathRandId(), store.NewMemStorage(), "localhost:4001", callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2ProtoServer, err := StartUdpProtocolNode(20, 5, 3, "localhost:4002", callTimeout, bufferSize)
+	node2ProtoServer, err := StartUdpProtocolNode(
+		20, 5, 3,
+		MathRandId(), store.NewMemStorage(),"localhost:4002", callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -53,12 +59,13 @@ func TestUdpPing(t *testing.T) {
 }
 
 func TestUdpFindNode(t *testing.T) {
-	node1, err := StartUdpProtocolNode(20, 5, 3, "localhost:5001", callTimeout, bufferSize)
+	node1, err := StartUdpProtocolNode(
+		20, 5, 3, MathRandId(), store.NewMemStorage(), "localhost:5001", callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
 
-	node2, err := StartUdpProtocolNode(20, 5, 3, "localhost:5002", callTimeout, bufferSize)
+	node2, err := StartUdpProtocolNode(20, 5, 3, MathRandId(), store.NewMemStorage(),"localhost:5002", callTimeout, bufferSize)
 	if err != nil {
 		t.Errorf("failed creating node: %v\n", err)
 	}
@@ -95,7 +102,7 @@ func TestUdpJoin(t *testing.T) {
 	for i := 0; i < n; i++ {
 		port := basePort + i
 		address := fmt.Sprintf("localhost:%d", port)
-		protoNode, err := StartUdpProtocolNode(k, b, alpha, address, callTimeout, bufferSize)
+		protoNode, err := StartUdpProtocolNode(k, b, alpha, MathRandId(), store.NewMemStorage(), address, callTimeout, bufferSize)
 		if err != nil {
 			t.Errorf("failed creating node: %v\n", err)
 		}
@@ -167,7 +174,7 @@ func TestUdpLookupSetGet(t *testing.T) {
 	for i := 0; i < n; i++ {
 		port := basePort + i
 		address := fmt.Sprintf("localhost:%d", port)
-		protoNode, err := StartUdpProtocolNode(k, b, alpha, address, callTimeout, bufferSize)
+		protoNode, err := StartUdpProtocolNode(k, b, alpha, MathRandId(), store.NewMemStorage(), address, callTimeout, bufferSize)
 		if err != nil {
 			t.Errorf("failed creating node: %v\n", err)
 		}

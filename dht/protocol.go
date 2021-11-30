@@ -38,6 +38,7 @@ func NewUdpProtocolNode(rpcNode *rpc.UdpNode, dhtNode *KadNode) *udpProtocolNode
 		findValueServiceId: rpc.ServiceId(2),
 		storeServiceId:     rpc.ServiceId(3),
 	}
+	// register rpc services
 	rpcNode.Services = []rpc.Service{
 		protocolNode.PingRpc,
 		protocolNode.FindNodeRpc,
@@ -49,25 +50,18 @@ func NewUdpProtocolNode(rpcNode *rpc.UdpNode, dhtNode *KadNode) *udpProtocolNode
 
 func StartUdpProtocolNode(
 	k, b, alpha int,
+	nodeId Id,
+	storage store.Storage,
 	address string,
 	rpcCallTimeout time.Duration,
 	readBufferSize uint32,
 	) (*udpProtocolNode, error) {
 
-	nodeId, err := CryptoRandId()
-	if err != nil {
-		return nil, err
-	}
-
-	storage := store.NewMemStorage()
 	dhtNode := NewKadNode(k, b, alpha, nodeId, storage)
-
 	rpcNode, err := rpc.NewUdpNode(address, nil, rpcCallTimeout, readBufferSize)
 	if err != nil {
 		return nil, err
 	}
-
-	// rpc services are registered here
 	protocolNode := NewUdpProtocolNode(rpcNode, dhtNode)
 
 	go rpcNode.Run()
